@@ -9,7 +9,7 @@ plugins {
 }
 
 group 'com.arboratum'
-version '1.0-SNAPSHOT'
+version '0.1.0'
 
 apply plugin: 'java'
 apply plugin: 'idea'
@@ -65,7 +65,7 @@ publishing {
             from components.java
             groupId 'com.arboratum'
             artifactId 'bean-generator'
-            version '1.0-SNAPSHOT'
+            version '0.1.0'
         }
     }
 }
@@ -75,7 +75,7 @@ bintray {
     key = project.hasProperty('bintrayApiKey') ? project.property('bintrayApiKey') : System.getenv('BINTRAY_API_KEY')
     publications = ['MyPublication']
     pkg {
-        repo = 'generic'
+        repo = 'maven'
         name = 'fastbeangen'
         userOrg = user
         licenses = ['GPL-3.0']
@@ -84,7 +84,7 @@ bintray {
         publicDownloadNumbers = true
         //attributes= ['a': ['ay1', 'ay2'], 'b': ['bee'], c: 'cee'] //Optional package-level attributes
         version {
-            name = '1.0'
+            name = '0.1.0'
         }
     }
 }
