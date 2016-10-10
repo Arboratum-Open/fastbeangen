@@ -84,7 +84,7 @@ bintray {
         publicDownloadNumbers = true
         //attributes= ['a': ['ay1', 'ay2'], 'b': ['bee'], c: 'cee'] //Optional package-level attributes
         version {
-            name = '1.0-SNAPSHOT'
+            name = '1.0'
         }
     }
 }
