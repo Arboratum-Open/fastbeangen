@@ -77,7 +77,7 @@ bintray {
     pkg {
         repo = 'generic'
         name = 'fastbeangen'
-        userOrg = "arboratum-open"
+        userOrg = user
         licenses = ['GPL-3.0']
         vcsUrl = 'https://github.com/Arboratum-Open/fastbeangen.git'
         //labels = ['gear', 'gore', 'gorilla']
