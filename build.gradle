@@ -1,15 +1,26 @@
+buildscript {
+    repositories {
+        jcenter()
+    }
+}
+
+plugins {
+    id "com.jfrog.bintray" version "1.7"
+}
+
 group 'com.arboratum'
 version '1.0-SNAPSHOT'
 
 apply plugin: 'java'
 apply plugin: 'idea'
 apply plugin: "maven"
+apply plugin: 'maven-publish'
 
 sourceCompatibility = 1.8
 
+
 repositories {
     jcenter()
-    mavenCentral()
 }
 
 dependencies {
@@ -44,5 +55,36 @@ dependencies {
 idea {
     module {
         scopes.PROVIDED.plus += [ configurations.compileOnly ]
+    }
+}
+
+
+publishing {
+    publications {
+        MyPublication(MavenPublication) {
+            from components.java
+            groupId 'com.arboratum'
+            artifactId 'bean-generator'
+            version '1.0-SNAPSHOT'
+        }
+    }
+}
+
+bintray {
+    user = project.hasProperty('bintrayUser') ? project.property('bintrayUser') : System.getenv('BINTRAY_USER')
+    key = project.hasProperty('bintrayApiKey') ? project.property('bintrayApiKey') : System.getenv('BINTRAY_API_KEY')
+    publications = ['MyPublication']
+    pkg {
+        repo = 'generic'
+        name = 'fastbeangen'
+        userOrg = "arboratum-open"
+        licenses = ['GPL-3.0']
+        vcsUrl = 'https://github.com/Arboratum-Open/fastbeangen.git'
+        //labels = ['gear', 'gore', 'gorilla']
+        publicDownloadNumbers = true
+        //attributes= ['a': ['ay1', 'ay2'], 'b': ['bee'], c: 'cee'] //Optional package-level attributes
+        version {
+            name = '1.0-SNAPSHOT'
+        }
     }
 }
