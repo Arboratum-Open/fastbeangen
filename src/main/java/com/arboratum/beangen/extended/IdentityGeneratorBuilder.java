@@ -61,10 +61,11 @@ public class IdentityGeneratorBuilder extends AbstractGeneratorBuilder<Identity>
     }
 
     public IdentityGeneratorBuilder countries(String resource) {
+        final Generator<CountryConfig> country =  BaseBuilders.enumerated(CountryConfig.class)
+                .valuesFromCSVResource(resource, k -> buildCountryConfig(k)).build();
         setup(seq -> {
             final Identity.Gender gender = GENDER.generate(seq);
-            final CountryConfig countryOfBirth = ((Generator<CountryConfig>) BaseBuilders.enumerated(CountryConfig.class)
-                    .valuesFromCSVResource(resource, k -> buildCountryConfig(k)).build()).generate(seq);
+            final CountryConfig countryOfBirth = country.generate(seq);
 
             Identity identity = new Identity();
             identity.setDateOfBirth(DATE_OF_BIRTH.generate(seq));
