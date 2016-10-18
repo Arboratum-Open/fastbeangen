@@ -64,6 +64,7 @@ public class IdentityGeneratorBuilder extends AbstractGeneratorBuilder<Identity>
             return identity;
         });
 
+        return this;
     }
 
     public IdentityGeneratorBuilder all() {
