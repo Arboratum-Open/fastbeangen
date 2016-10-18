@@ -16,17 +16,6 @@ import java.util.Date;
 public class IdentityGeneratorBuilder extends AbstractGeneratorBuilder<Identity> {
     public static final ImmutableSet<Class> SUPPORTED_TYPES = ImmutableSet.of(Identity.class);
 
-    private static final Generator<CountryConfig> COUNTRY_CONFIG_GENERATOR = BaseBuilders.enumerated(CountryConfig.class)
-            .valuesFromCSVResource("/generator/country-population.csv", k -> buildCountryConfig(k)).build();
-
-    private static CountryConfig buildCountryConfig(String iso2) {
-        return CountryConfig.builder()
-                .country(iso2)
-                .familyName(BaseBuilders.enumerated(String.class).valuesFromCSVResource("/generator/familyName_" + iso2 + ".csv").build())
-                .givenNameMale(BaseBuilders.enumerated(String.class).valuesFromCSVResource("/generator/givenName_male_" + iso2 + ".csv").build())
-                .givenNameFemale(BaseBuilders.enumerated(String.class).valuesFromCSVResource("/generator/givenName_female_" + iso2 + ".csv").build())
-                .build();
-    }
 
     private static final Generator<Identity.Gender> GENDER = BaseBuilders.anEnum(Identity.Gender.class).uniform().build();
     private static final Generator<java.util.Date> DATE_OF_BIRTH = BaseBuilders.aDate().uniform(
@@ -68,10 +57,14 @@ public class IdentityGeneratorBuilder extends AbstractGeneratorBuilder<Identity>
     }
 
     public IdentityGeneratorBuilder all() {
+        return countries("/generator/country-population.csv");
+    }
 
+    public IdentityGeneratorBuilder countries(String resource) {
         setup(seq -> {
             final Identity.Gender gender = GENDER.generate(seq);
-            final CountryConfig countryOfBirth = COUNTRY_CONFIG_GENERATOR.generate(seq);
+            final CountryConfig countryOfBirth = ((Generator<CountryConfig>) BaseBuilders.enumerated(CountryConfig.class)
+                    .valuesFromCSVResource(resource, k -> buildCountryConfig(k)).build()).generate(seq);
 
             Identity identity = new Identity();
             identity.setDateOfBirth(DATE_OF_BIRTH.generate(seq));
@@ -89,4 +82,14 @@ public class IdentityGeneratorBuilder extends AbstractGeneratorBuilder<Identity>
 
         return this;
     }
+
+    private static CountryConfig buildCountryConfig(String iso2) {
+        return CountryConfig.builder()
+                .country(iso2)
+                .familyName(BaseBuilders.enumerated(String.class).valuesFromCSVResource("/generator/familyName_" + iso2 + ".csv").build())
+                .givenNameMale(BaseBuilders.enumerated(String.class).valuesFromCSVResource("/generator/givenName_male_" + iso2 + ".csv").build())
+                .givenNameFemale(BaseBuilders.enumerated(String.class).valuesFromCSVResource("/generator/givenName_female_" + iso2 + ".csv").build())
+                .build();
+    }
+
 }
