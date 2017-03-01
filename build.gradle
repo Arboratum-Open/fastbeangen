@@ -1,90 +1,21 @@
 buildscript {
     repositories {
         jcenter()
+        mavenCentral()
     }
 }
 
-plugins {
-    id "com.jfrog.bintray" version "1.7"
-}
+subprojects {
+    group 'com.arboratum'
+    version '0.1.4'
 
-group 'com.arboratum'
-version '0.1.4'
+    apply plugin: 'java'
+    apply plugin: 'idea'
 
-apply plugin: 'java'
-apply plugin: 'idea'
-apply plugin: "maven"
-apply plugin: 'maven-publish'
+    sourceCompatibility = 1.8
 
-sourceCompatibility = 1.8
-
-
-repositories {
-    jcenter()
-}
-
-dependencies {
-    compileOnly "org.projectlombok:lombok:1.16.10"
-    testCompileOnly "org.projectlombok:lombok:1.16.10"
-
-    compile "com.esotericsoftware:reflectasm:1.11.3"
-    compile group: 'dk.brics.automaton', name: 'automaton', version: '1.11-8'
-    compile group: 'com.google.guava', name: 'guava', version: '19.0'
-    compile group: 'org.apache.commons', name: 'commons-math3', version: '3.6.1'
-    compile 'joda-time:joda-time:2.9.4'
-
-    testCompile group: 'junit', name: 'junit', version: '4.11'
-// https://mvnrepository.com/artifact/org.rocksdb/rocksdbjni
-    testCompile group: 'org.rocksdb', name: 'rocksdbjni', version: '4.8.0'
-    // https://mvnrepository.com/artifact/org.apache.flink/flink-core
-    testCompile group: 'org.apache.flink', name: 'flink-core', version: '1.1.1'
-    testCompile group: 'org.apache.flink', name: 'flink-java', version: '1.1.1'
-    testCompile group: 'org.apache.flink', name: 'flink-clients_2.11', version: '1.1.1'
-// https://mvnrepository.com/artifact/net.jpountz.lz4/lz4
-    testCompile group: 'net.jpountz.lz4', name: 'lz4', version: '1.3.0'
-    // https://mvnrepository.com/artifact/com.linkedin.paldb/paldb
-    testCompile group: 'com.linkedin.paldb', name: 'paldb', version: '1.2.0'
-
-    // https://mvnrepository.com/artifact/org.xerial.snappy/snappy-java
-    testCompile group: 'org.xerial.snappy', name: 'snappy-java', version: '1.1.2.6'
-
-
-
-}
-
-idea {
-    module {
-        scopes.PROVIDED.plus += [ configurations.compileOnly ]
+    repositories {
+        jcenter()
     }
-}
 
-
-publishing {
-    publications {
-        MyPublication(MavenPublication) {
-            from components.java
-            groupId 'com.arboratum'
-            artifactId 'fastbeangen'
-            version project.version
-        }
-    }
-}
-
-bintray {
-    user = project.hasProperty('bintrayUser') ? project.property('bintrayUser') : System.getenv('BINTRAY_USER')
-    key = project.hasProperty('bintrayApiKey') ? project.property('bintrayApiKey') : System.getenv('BINTRAY_API_KEY')
-    publications = ['MyPublication']
-    pkg {
-        repo = 'maven'
-        name = 'fastbeangen'
-        userOrg = user
-        licenses = ['GPL-3.0']
-        vcsUrl = 'https://github.com/Arboratum-Open/fastbeangen.git'
-        //labels = ['gear', 'gore', 'gorilla']
-        publicDownloadNumbers = true
-        //attributes= ['a': ['ay1', 'ay2'], 'b': ['bee'], c: 'cee'] //Optional package-level attributes
-        version {
-            name = project.version
-        }
-    }
 }

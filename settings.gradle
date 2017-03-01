@@ -1,2 +1,5 @@
 rootProject.name = 'bean-generator'
 
+include "fastbeangen"
+include "fastbeangen-example"
+

@@ -1,0 +1,76 @@
+buildscript {
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        classpath("org.springframework.boot:spring-boot-gradle-plugin:1.5.1.RELEASE")
+    }
+}
+
+apply plugin: 'org.springframework.boot'
+
+
+dependencies {
+    compile project(":fastbeangen")
+    compile 'io.projectreactor:reactor-core:3.0.4.RELEASE'
+// https://mvnrepository.com/artifact/org.apache.commons/commons-pool2
+    compile group: 'org.apache.commons', name: 'commons-pool2', version: '2.4.2'
+
+    // https://mvnrepository.com/artifact/com.beust/jcommander
+    compile group: 'com.beust', name: 'jcommander', version: '1.64'
+
+    compile("org.springframework.boot:spring-boot-starter")
+    compile "org.springframework.boot:spring-boot-starter-data-jpa"
+
+    // https://mvnrepository.com/artifact/com.h2database/h2
+    compile group: 'com.h2database', name: 'h2', version: '1.4.193'
+    compile "org.hsqldb:hsqldb"
+    compile "net.sf.opencsv:opencsv:2.3"
+
+}
+
+
+task runGeneration(type: JavaExec) {
+    classpath = sourceSets.main.runtimeClasspath
+
+    main = 'com.arboratum.beangen.example1.SimpleGenAndQueryTest'
+
+    args "--persons", "10000", "--relations", "2", "generate"
+
+    doFirst {
+        file("${buildDir}/demo-data").deleteDir()
+    }
+}
+
+task runQueryTest(type: JavaExec) {
+    classpath = sourceSets.main.runtimeClasspath
+
+    main = 'com.arboratum.beangen.example1.SimpleGenAndQueryTest'
+
+    args "--persons", "10000", "--relations", "2", "query"
+    jvmArgs "-Xmx8G"
+}
+task runCudAndQueryTest(type: JavaExec) {
+    classpath = sourceSets.main.runtimeClasspath
+
+    main = 'com.arboratum.beangen.example1.SimpleGenAndQueryTest'
+
+    args "--persons", "10000", "--relations", "2", "cud"
+    jvmArgs "-Xmx8G"
+}
+
+
+task runGenCVS(type: JavaExec) {
+    classpath = sourceSets.main.runtimeClasspath
+
+    main = 'com.arboratum.beangen.example1.DatabaseGeneratorAsCSVTest'
+
+    jvmArgs "-Xmx8G"
+
+    args "--persons", "1000000", "--relations", "20000"
+
+    doFirst {
+        fileTree(buildDir).include('*.csv').each { it.delete() }
+    }
+
+}
