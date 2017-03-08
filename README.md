@@ -1,6 +1,6 @@
 # fastbeangen
 
-The library is published on bintray https://bintray.com/gpicron/maven/fastbeangen
+The library is published on bintray https://bintray.com/arboratum-open/public/fastbeangen#
 
 In Maven:
 
