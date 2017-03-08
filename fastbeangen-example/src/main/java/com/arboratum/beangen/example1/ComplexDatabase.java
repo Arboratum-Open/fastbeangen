@@ -50,6 +50,7 @@ public class ComplexDatabase {
                 .with("identity", anIdentity().country("be"))
                 .with("address", addressGenerator)
                 .build();
+
         final BeanGeneratorBuilder<Person> basePeresonOfFRGenerator = aBean(Person.class)
                 .injectIdIn("id")
                 .with("identity", anIdentity().country("fr"))
@@ -57,6 +58,7 @@ public class ComplexDatabase {
         final Generator<Person> personOfFRGenerator = basePeresonOfFRGenerator
                 .postProcess((person, randomSequence) -> { person.setId(person.getId() + 10000000); return person;}) // to avoid PK conflict
                 .build();
+
         final Generator<UpdateOf<Person>> personUpdateGenerator = enumerated(UpdateOf.class)
                 .generators(
                         aBean(FixTypoErrorInLastNameCommand.class).withDefaultFieldPopulators(),

@@ -1,4 +1,4 @@
-rootProject.name = 'bean-generator'
+rootProject.name = 'fastbeangen'
 
 include "fastbeangen"
 include "fastbeangen-example"
