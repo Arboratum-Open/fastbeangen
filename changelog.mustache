@@ -1,0 +1,27 @@
+
+# Temporary file containing generate change log to be include in the main change log file
+
+{{#tags}}
+## {{name}}
+ {{#issues}}
+  {{#hasIssue}}
+   {{#hasLink}}
+### {{name}} [{{issue}}]({{link}}) {{title}}
+   {{/hasLink}}
+   {{^hasLink}}
+### {{name}} {{issue}} {{title}}
+   {{/hasLink}}
+  {{/hasIssue}}
+  {{^hasIssue}}
+### {{name}}
+  {{/hasIssue}}
+
+  {{#commits}}
+* {{{messageTitle}}} ([{{hash}}](https://github.com/tomasbjerre/git-changelog-gradle-plugin/commit/{{hash}}) - {{authorName}} - *{{commitTime}}*)
+{{#messageBodyItems}}
+ * {{.}}
+{{/messageBodyItems}}
+  {{/commits}}
+
+ {{/issues}}
+{{/tags}}

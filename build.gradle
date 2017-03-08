@@ -5,6 +5,10 @@ buildscript {
     }
 }
 
+plugins {
+    id "se.bjurr.gitchangelog.git-changelog-gradle-plugin" version "1.40"
+}
+
 subprojects {
     group 'com.arboratum'
     version '0.1.6'
@@ -18,4 +22,8 @@ subprojects {
         jcenter()
     }
 
+}
+
+task generateChangelog(type: se.bjurr.gitchangelog.plugin.gradle.GitChangelogTask) {
+    filePath = "CHANGELOG_tmp.md";
 }
