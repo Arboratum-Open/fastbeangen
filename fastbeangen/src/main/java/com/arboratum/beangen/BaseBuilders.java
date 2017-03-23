@@ -11,7 +11,7 @@ import java.util.Set;
 /**
  * Created by gpicron on 09/08/2016.
  */
-public class BaseBuilders {
+public final class BaseBuilders {
 
     public static BooleanGeneratorBuilder aBoolean() {
         return new BooleanGeneratorBuilder(Boolean.class);

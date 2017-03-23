@@ -2,6 +2,7 @@ package com.arboratum.beangen.core;
 
 import com.arboratum.beangen.Generator;
 import com.arboratum.beangen.util.RandomSequence;
+import org.apache.commons.math3.stat.Frequency;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -54,6 +55,41 @@ public class CharSequenceGeneratorBuilderTest {
             //ref.delete();
 
         }
+
+    }
+
+    @Test
+    public void withCharactersAndUniform() throws Exception {
+        Frequency frequency = new Frequency();
+        frequency.incrementValue('a', 100);
+        frequency.incrementValue('b', 50);
+
+        final Generator<String> s = new CharSequenceGeneratorBuilder<>(String.class)
+                .withCharactersAnd(frequency).uniformLength(10, 20)
+                .build();
+
+        Assert.assertEquals("bababababaaaaaaabaaa", s.generate(0));
+        Assert.assertEquals("abaaababaabaaabaa", s.generate(1));
+        Assert.assertEquals("bbbaaaabaaabba", s.generate(100));
+
+    }
+
+    @Test
+    public void withCharactersAndDistro() throws Exception {
+        Frequency frequency = new Frequency();
+        frequency.incrementValue('a', 100);
+        frequency.incrementValue('b', 50);
+        Frequency frequencyLength = new Frequency();
+        frequencyLength.incrementValue(10, 100);
+        frequencyLength.incrementValue(20, 50);
+
+        final Generator<String> s = new CharSequenceGeneratorBuilder<>(String.class)
+                .withCharactersAnd(frequency).lengthDistribution(frequencyLength)
+                .build();
+
+        Assert.assertEquals("bababababaaaaaaabaaa", s.generate(0));
+        Assert.assertEquals("abaaababaa", s.generate(1));
+        Assert.assertEquals("bbbaaaabaa", s.generate(100));
 
     }
 }

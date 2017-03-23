@@ -2,10 +2,16 @@ package com.arboratum.beangen.core;
 
 import com.arboratum.beangen.BaseBuilders;
 import com.arboratum.beangen.Generator;
+import com.arboratum.beangen.util.DistributionUtils;
+import org.apache.commons.math3.stat.Frequency;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.util.Map;
 import java.util.Random;
+import java.util.TreeMap;
+
+import static com.arboratum.beangen.BaseBuilders.aString;
 
 /**
  * Created by gpicron on 10/08/2016.
@@ -111,4 +117,40 @@ public class BeanGeneratorBuilderTest {
 
 
     }
+
+    @Test
+    public void aBitMoreComplex() throws Exception {
+        Map<Character, Integer> characterCounts = new TreeMap<>();
+        characterCounts.put('D', 100);
+        characterCounts.put('B', 100);
+        characterCounts.put('A', 10);
+
+        Map<Integer, Integer> sizeCounts = new TreeMap<>();
+        sizeCounts.put(4, 100);
+        sizeCounts.put(5, 100);
+        sizeCounts.put(6, 10);
+        sizeCounts.put(7, 1);
+
+        Frequency frequencyOfChars = DistributionUtils.convert(characterCounts);
+        Frequency frequencyOfSize = DistributionUtils.convert(sizeCounts);
+
+        final Generator<TestBean> generator = BaseBuilders.aBean(TestBean.class)
+                .injectIdIn("id")
+                .with("name", aString().withCharactersAnd(frequencyOfChars).lengthDistribution(frequencyOfSize))
+                .build();
+
+        TestBean bean = generator.generate(0);
+        Assert.assertEquals("bean 0 is not matching :" + bean, 0, bean.getId());
+        Assert.assertEquals("bean 0 is not matching :" + bean, "DBDBD", bean.getName());
+
+        bean = generator.generate(7);
+        Assert.assertEquals("bean 7 is not matching :" + bean, 7, bean.getId());
+        Assert.assertEquals("bean 7 is not matching :" + bean, "DDBB", bean.getName());
+
+        bean = generator.generate(0);
+        Assert.assertEquals("bean 0 is not matching :" + bean, 0, bean.getId());
+        Assert.assertEquals("bean 0 is not matching :" + bean, "DBDBD", bean.getName());
+
+    }
+
 }

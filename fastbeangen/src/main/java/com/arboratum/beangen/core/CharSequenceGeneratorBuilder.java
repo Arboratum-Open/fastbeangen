@@ -1,9 +1,13 @@
 package com.arboratum.beangen.core;
 
+import com.arboratum.beangen.BaseBuilders;
+import com.arboratum.beangen.Generator;
 import com.arboratum.beangen.distribution.RegExpStringGenerator;
 import com.arboratum.beangen.util.RandomSequence;
+import com.arboratum.beangen.util.ToCharFunction;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.primitives.Chars;
+import org.apache.commons.math3.stat.Frequency;
 
 import java.nio.CharBuffer;
 import java.util.TreeSet;
@@ -53,15 +57,44 @@ public class CharSequenceGeneratorBuilder<VALUE> extends AbstractGeneratorBuilde
         }
     }
 
+    /**
+     * Specify the characters with equals probability to appear and uniform length between 0 and 20
+     *
+     * @param chars
+     * @return
+     */
     public CharSequenceGeneratorBuilder<VALUE> withCharacters(String chars) {
         new CharSetGeneratorConfig(chars).uniformLength(0,20);
         return this;
     }
 
+    /**
+     * Specify the characters with equals probability to appear
+     *
+     * @param chars
+     * @return
+     */
     public CharSetGeneratorConfig withCharactersAnd(String chars) {
         return new CharSetGeneratorConfig(chars);
     }
 
+
+    /**
+     * Specify the characters and their probability to appear as a Frequency of char
+     *
+     * @param charsAndFrequency
+     * @return
+     */
+    public CharSetGeneratorConfig withCharactersAnd(Frequency charsAndFrequency) {
+        return new CharSetGeneratorConfig(charsAndFrequency);
+    }
+
+    /**
+     * Specify the string must match the given regexp
+     *
+     * @param regexp
+     * @return
+     */
     public CharSequenceGeneratorBuilder<VALUE> matching(String regexp) {
         final RegExpStringGenerator valueFunction = new RegExpStringGenerator(regexp);
 
@@ -69,38 +102,79 @@ public class CharSequenceGeneratorBuilder<VALUE> extends AbstractGeneratorBuilde
         return this;
     }
 
+    /**
+     * Specify the string must match contains only A-Za-z0-9 character with uniform probability
+     * of length between minSize and maxSize
+     *
+     * @param minSize
+     * @param maxSize
+     * @return
+     */
     public CharSequenceGeneratorBuilder<VALUE> alphaNumeric(int minSize, int maxSize) {
         return withCharactersAnd("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0987654321").uniformLength(minSize,maxSize);
     }
 
 
     public class CharSetGeneratorConfig {
-
-        private final char[] chars;
+        private final ToCharFunction<RandomSequence> nextChar;
 
         CharSetGeneratorConfig(String characters) {
-            chars = Chars.toArray(new TreeSet<>(Chars.asList(characters.toCharArray())));
 
+            final char[] chars = Chars.toArray(new TreeSet<>(Chars.asList(characters.toCharArray())));
+            nextChar = r -> chars[r.nextInt(chars.length)];
         }
 
+        public CharSetGeneratorConfig(Frequency frequency) {
+            final Generator<Character> charGenerator = BaseBuilders.enumerated(Character.class).from(frequency).build();
+            nextChar = r -> charGenerator.apply(r).charValue();
+        }
+
+        /**
+         * Specify the probabiliy of the length as uniformly distributed between min and max included
+         *
+         *
+         * @param min
+         * @param max
+         * @return
+         */
         public CharSequenceGeneratorBuilder<VALUE> uniformLength(int min, int max) {
             final int range = max - min + 1;
             final ToIntFunction<RandomSequence> lengthGenerator = (r) -> r.nextInt(range) + min;
 
-            final Function<RandomSequence, char[]> valueFunction = (r) -> {
+            buildGenerator(lengthGenerator);
+
+            return CharSequenceGeneratorBuilder.this;
+        }
+
+        /**
+         * Specify the probabiliy of the length using a Frequency of Int
+         *
+         * @param frequency
+         * @return
+         */
+        public CharSequenceGeneratorBuilder<VALUE> lengthDistribution(Frequency frequency) {
+            final Generator<Number> charGenerator = BaseBuilders.enumerated(Number.class).from(frequency).build();
+            final ToIntFunction<RandomSequence> lengthGenerator = r -> charGenerator.apply(r).intValue();
+
+            buildGenerator(lengthGenerator);
+
+            return CharSequenceGeneratorBuilder.this;
+        }
+
+        private void buildGenerator(ToIntFunction<RandomSequence> lengthGenerator) {
+            final Function<RandomSequence, char[]> valueFunction;
+            valueFunction = (r) -> {
                 final int size = lengthGenerator.applyAsInt(r);
                 final char[] buffer = new char[size];
 
                 for (int i = 0; i < size; i++) {
-                    buffer[i] = chars[r.nextInt(chars.length)];
+                    buffer[i] = nextChar.applyAsChar(r);
                 }
 
                 return buffer;
             };
 
             buildFromCharArrayGenerator(valueFunction);
-
-            return CharSequenceGeneratorBuilder.this;
         }
     }
 }
