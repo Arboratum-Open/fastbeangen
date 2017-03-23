@@ -1,6 +1,12 @@
 
 # FastBeanGen -  Fast Random Data Generator
 
+
+## v0.1.7
+
+* [IMPROVEMENT] updated familyname datasets ([00d6ba2f92e6e3d](https://github.com/tomasbjerre/git-changelog-gradle-plugin/commit/00d6ba2f92e6e3d) - Geoffrey Picron - *2017-03-23 19:41:41*)
+* [FEATURE] Added ability to generate string based on frequency of character and frequency of length ([1ccc6b99c5dc8f8](https://github.com/tomasbjerre/git-changelog-gradle-plugin/commit/1ccc6b99c5dc8f8) - Geoffrey Picron - *2017-03-23 19:41:10*)
+
 ## v0.1.6
 
 * Release in jcenter and maven central ([be974615773148e](https://github.com/tomasbjerre/git-changelog-gradle-plugin/commit/be974615773148e) - Geoffrey Picron - *2017-03-08 07:42:14*)
