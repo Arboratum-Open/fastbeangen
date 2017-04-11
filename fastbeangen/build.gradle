@@ -40,6 +40,26 @@ artifacts {
     archives sourcesJar, javadocJar
 }
 
+def pomConfig = {
+    licenses {
+        license {
+            name "GNU General Public License, Version 3"
+            url "http://www.gnu.org/licenses/gpl-3.0.html"
+            distribution "manual"
+        }
+    }
+    developers {
+        developer {
+            id "gpicron"
+            name "Geoffrey Picron"
+            email "geoffrey.picron@arboratum.com"
+        }
+    }
+    scm {
+        url 'https://github.com/Arboratum-Open/fastbeangen.git'
+    }
+}
+
 publishing {
     publications {
         MyPublication(MavenPublication) {
@@ -49,9 +69,18 @@ publishing {
             groupId 'com.arboratum'
             artifactId 'fastbeangen'
             version project.version
+            pom.withXml {
+                def root = asNode()
+                root.appendNode('description', 'FastBeanGen is an Idempotent Random bean generator')
+                root.appendNode('name', 'FastBeanGen')
+                root.appendNode('url', 'https://github.com/Arboratum-Open/fastbeangen.git')
+                root.children().last() + pomConfig
+            }
         }
     }
 }
+
+
 
 bintray {
     user = project.hasProperty('bintrayUser') ? project.property('bintrayUser') : System.getenv('BINTRAY_USER')
@@ -60,6 +89,7 @@ bintray {
     pkg {
         repo = 'public'
         name = 'fastbeangen'
+
         userOrg = 'arboratum-open'
         licenses = ['GPL-3.0']
         vcsUrl = 'https://github.com/Arboratum-Open/fastbeangen.git'
@@ -68,6 +98,10 @@ bintray {
         //attributes= ['a': ['ay1', 'ay2'], 'b': ['bee'], c: 'cee'] //Optional package-level attributes
         version {
             name = project.version
+            desc = 'FastBeanGen library version ' +  project.version
+            released  = new Date()
+            vcsTag = 'v' + project.version
         }
+
     }
 }
