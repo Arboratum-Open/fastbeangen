@@ -6,4 +6,6 @@ package com.arboratum.beangen.util;
 public interface ValueAssigner<CLASS,VALUE> {
 
     void assign(CLASS object, VALUE value);
+
+    boolean accept(Class<? extends VALUE> type);
 }

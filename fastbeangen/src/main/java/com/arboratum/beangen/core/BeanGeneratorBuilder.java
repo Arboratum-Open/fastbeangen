@@ -114,20 +114,34 @@ public class BeanGeneratorBuilder<CLASS> extends AbstractGeneratorBuilder<CLASS>
     }
 
     public <VALUE> BeanGeneratorBuilder<CLASS> with(String fieldName, AbstractGeneratorBuilder<VALUE> generator) {
-        populators.put(fieldName, generator.build());
+        return with(fieldName, generator.build());
 
-        return this;
     }
 
     public <VALUE> BeanGeneratorBuilder<CLASS> with(String fieldName, Generator<VALUE> generator) {
-        populators.put(fieldName, generator);
+        final ValueAssigner valueAssigner = getValueAssigner(fieldName);
+        if (valueAssigner.accept(generator.getType())) {
+            populators.put(fieldName, generator);
+        } else {
+            throw new IllegalArgumentException("The field '" + fieldName + "' cannot be set to type accept with type " + generator.getType());
+        }
 
         return this;
     }
 
     private <CLASS,FIELD> ValueAssigner<CLASS,FIELD> getValueAssigner(String fieldName) {
-        final int methodIndex = access.getIndex("set" + Character.toUpperCase(fieldName.charAt(0)) + fieldName.substring(1));
-        return (o, v) -> access.invoke(o, methodIndex, v);
+        final int methodIndex = access.getIndex("set" + Character.toUpperCase(fieldName.charAt(0)) + fieldName.substring(1), 1);
+        return new ValueAssigner<CLASS, FIELD>() {
+            @Override
+            public void assign(CLASS o, FIELD v) {
+                access.invoke(o, methodIndex, v);
+            }
+
+            @Override
+            public boolean accept(Class<? extends FIELD> type) {
+                return type.isAssignableFrom(access.getParameterTypes()[methodIndex][0]);
+            }
+        };
     }
 
 

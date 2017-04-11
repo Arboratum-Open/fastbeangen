@@ -62,12 +62,12 @@ public class BooleanGeneratorBuilderTest {
         BooleanGeneratorBuilder builder = new BooleanGeneratorBuilder(Boolean.class);
         final Generator<Boolean> generator = builder.bernoulli(0.3).build();
 
-        assertEquals(true, generator.generate(0));
+        assertEquals(false, generator.generate(0));
         assertEquals(false, generator.generate(1));
         assertEquals(true, generator.generate(2));
-        assertEquals(false, generator.generate(3));
-        assertEquals(true, generator.generate(4));
-        assertEquals(false, generator.generate(5));
+        assertEquals(true, generator.generate(3));
+        assertEquals(false, generator.generate(4));
+        assertEquals(true, generator.generate(5));
     }
 
 }
