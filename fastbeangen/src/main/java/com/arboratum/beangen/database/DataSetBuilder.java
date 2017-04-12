@@ -66,12 +66,12 @@ public class DataSetBuilder<T> {
         previous.addValue(1);
         if (initOpGenerator != null) {
             DataSet monteCarloSet = new DataSet<>(initOpGenerator);
-            final Iterable<DataSet.Entry> dataSetOperations = monteCarloSet.buildOperationFeed().toIterable();
+            final Iterable<DataSet.Operation> dataSetOperations = monteCarloSet.buildOperationFeed(true).toIterable();
             int i = 0;
 
             System.out.print("Performing montecarlo procedure to estimate the version distribution");
 
-            for (DataSet.Entry entry : dataSetOperations) {
+            for (DataSet.Operation entry : dataSetOperations) {
                 i++;
                 if (i % 100000 == 0) {
                     System.out.print(".");
@@ -149,4 +149,14 @@ public class DataSetBuilder<T> {
         updateTriggers.add(trigger);
         return this;
     }
+
+    public Scheduler getScheduler() {
+        return scheduler;
+    }
+
+    public void setScheduler(Scheduler scheduler) {
+        this.scheduler = scheduler;
+    }
+
+
 }
