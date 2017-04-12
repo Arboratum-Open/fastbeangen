@@ -6,6 +6,7 @@ import com.arboratum.beangen.util.RandomSequence;
 import com.arboratum.beangen.util.ValueAssigner;
 import com.esotericsoftware.reflectasm.ConstructorAccess;
 import com.esotericsoftware.reflectasm.MethodAccess;
+import com.google.common.primitives.Primitives;
 
 import java.lang.reflect.Modifier;
 import java.util.*;
@@ -139,7 +140,16 @@ public class BeanGeneratorBuilder<CLASS> extends AbstractGeneratorBuilder<CLASS>
 
             @Override
             public boolean accept(Class<? extends FIELD> type) {
-                return type.isAssignableFrom(access.getParameterTypes()[methodIndex][0]);
+                final Class parameterClass = access.getParameterTypes()[methodIndex][0];
+                if (type.isAssignableFrom(parameterClass)) {
+                    return true;
+                } else if (parameterClass.isPrimitive() && parameterClass == Primitives.unwrap(type)) {
+                    return true;
+                } else if (type.isPrimitive() && type == Primitives.unwrap(parameterClass)) {
+                    return true;
+                } else {
+                    return false;
+                }
             }
         };
     }
