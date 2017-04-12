@@ -91,7 +91,7 @@ public class SimpleGenAndQueryTest {
                 if (lastDone > 0)  {
                     System.out.println("Update version vectors with the cud performed in previous tests");
                     base.<Person>getDataView("persons")
-                            .buildOperationFeed().take(lastDone).doOnNext(DataSet.Operation::ack).count().block();
+                            .buildOperationFeed(true).take(lastDone).count().block();
                 }
 
                 final Flux<Map<Boolean, LongSummaryStatistics>> queryFlux =
