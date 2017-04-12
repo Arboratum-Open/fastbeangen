@@ -37,9 +37,11 @@ public class DataSet<ENTRY> implements DataView<ENTRY> {
         byte version;
         int elementIndex;
         do {
+            if (size == 0) return null;
             elementIndex = r.nextInt(lastIndex);
             version = versions[elementIndex];
         } while (version < 0);
+
         return new Entry(elementIndex, version);
     }
 
@@ -163,6 +165,26 @@ public class DataSet<ENTRY> implements DataView<ENTRY> {
         public void ack() {
             operationAcks.onNext(this);
         }
+
+        public void synchronousAck() {
+            final Entry entry = this.getEntry();
+
+            if (locks.clear(entry.elementIndex)) {
+                final OpCode opCode = entry.getLastOperation();
+                versions[entry.elementIndex] = entry.elementVersion;
+                switch (opCode) {
+                    case CREATE:
+                        size++;
+                        break;
+                    case DELETE: {
+                        size--;
+                        break;
+                    }
+                }
+            } else {
+                throw new IllegalStateException("The operation was acked 2 times :" + this);
+            }
+        }
     }
 
     private final TopicProcessor<Operation> operationAcks = TopicProcessor.share("Operation-Acks", 8);
@@ -214,31 +236,12 @@ public class DataSet<ENTRY> implements DataView<ENTRY> {
 
 
     @Override
-    public Flux<Operation> buildOperationFeed() {
+    public Flux<Operation> buildOperationFeed(boolean autoAck) {
         if (feedBuilt) throw new IllegalStateException("A feed can be built only once");
         feedBuilt =  true;
-        operationAcks.subscribe(operation -> {
-            final Entry entry = operation.getEntry();
+        if (!autoAck) operationAcks.subscribe(Operation::synchronousAck);  // this guaranty to have a single thread for this
 
-            if (locks.clear(entry.elementIndex)) {
-                final OpCode opCode = entry.getLastOperation();
-                versions[entry.elementIndex] = entry.elementVersion;
-                switch (opCode) {
-                    case CREATE:
-                        size++;
-                        break;
-                    case DELETE: {
-                        size--;
-                        break;
-                    }
-                }
-            } else {
-                throw new IllegalStateException("The operation was acked 2 times :" + operation);
-            }
-        });  // this guaranty to have a single thread for this
-
-
-        return Flux.range(0, Integer.MAX_VALUE)
+        Flux<Operation> operationFlux = Flux.range(0, Integer.MAX_VALUE)
                 .map(new Function<Integer, Operation>() {
 
                          @Override
@@ -252,17 +255,18 @@ public class DataSet<ENTRY> implements DataView<ENTRY> {
 
                                      locks.set(index);
 
-                                     return new Operation(id, new Entry( index, (byte) 1));
+                                     return new Operation(id, new Entry(index, (byte) 1));
                                  case UPDATE:
                                  case DELETE: {
-                                     if (lastIndex == -1) return NON_GENERATABLE_FOR_ID;  // no entry yet
+                                     if (lastIndex == -1 || size == 0) return NON_GENERATABLE_FOR_ID;  // no entry yet or no more entry
 
                                      // search random existing entry
                                      final RandomSequence randomSequence = new RandomSequence(id);
-                                     int select = randomSequence.nextInt(lastIndex+1);
+                                     int select = randomSequence.nextInt(lastIndex + 1);
                                      locks.waitClear(select);
                                      while (versions[select] <= 0) {
-                                         select = randomSequence.nextInt(lastIndex+1); // skip deleted
+                                         if (size == 0) return NON_GENERATABLE_FOR_ID;  // no more entry
+                                         select = randomSequence.nextInt(lastIndex + 1); // skip deleted
                                          locks.waitClear(select);
                                      }
 
@@ -275,15 +279,18 @@ public class DataSet<ENTRY> implements DataView<ENTRY> {
 
                                      locks.waitClearAndSet(select);
 
-                                     return new Operation(id, new Entry( select, version));
+                                     return new Operation(id, new Entry(select, version));
                                  }
                                  default:
                                      throw new RuntimeException("This should never occur");
                              }
                          }
                      }
-                  )
-                .filter(op -> op != NON_GENERATABLE_FOR_ID).subscribeOn(scheduler);
+                )
+                .filter(op -> op != NON_GENERATABLE_FOR_ID)
+                .subscribeOn(scheduler);
+        if (autoAck) operationFlux = operationFlux.doOnNext(Operation::synchronousAck);
+        return operationFlux;
     }
 
     private Mono<ENTRY> getEntry(int id) {

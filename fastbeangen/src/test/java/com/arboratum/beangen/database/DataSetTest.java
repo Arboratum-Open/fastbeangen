@@ -29,8 +29,8 @@ public class DataSetTest {
                 .values(DataView.OpCode.values())
                 .weights(1, 1, 1)
                 .build());
-        final Flux<DataSet<Pojo>.Operation> call1 = pojo.buildOperationFeed();
-        final Flux<DataSet<Pojo>.Operation> call2 = pojo.buildOperationFeed();
+        final Flux<DataSet<Pojo>.Operation> call1 = pojo.buildOperationFeed(true);
+        final Flux<DataSet<Pojo>.Operation> call2 = pojo.buildOperationFeed(true);
     }
 
     @Test
@@ -39,22 +39,37 @@ public class DataSetTest {
                 .values(DataView.OpCode.values())
                 .weights(1, 1, 1)
                 .build());
-        final Flux<DataSet.Operation> flux = pojo.buildOperationFeed();
+        final Flux<DataSet.Operation> flux = pojo.buildOperationFeed(true);
 
         StepVerifier.create(flux.take(10) .map(op -> Tuples.of(op.getEntry().getElementIndex(), op.getEntry().getElementVersion())))
                 .expectNext(
                         Tuples.of(0, (byte) 1),
-                        Tuples.of(0, (byte) 2),
                         Tuples.of(1, (byte) 1),
-                        Tuples.of(0, (byte)3),
-                        Tuples.of(2, (byte)1),
-                        Tuples.of(3, (byte)1),
-                        Tuples.of(4, (byte)1),
-                        Tuples.of(5, (byte)1),
-                        Tuples.of(1, (byte)-1),
-                        Tuples.of(6, (byte)1))
+                        Tuples.of(1, (byte) 2),
+                        Tuples.of(2, (byte) 1),
+                        Tuples.of(2, (byte) -1),
+                        Tuples.of(3, (byte) 1),
+                        Tuples.of(0, (byte) 2),
+                        Tuples.of(1, (byte) 3),
+                        Tuples.of(0, (byte) 3),
+                        Tuples.of(0, (byte) -3))
                 .verifyComplete();
     }
+
+
+    @Test
+    public void selectOneOnEmptyDataSet() throws Exception {
+        DataSet<Pojo> pojo = new DataSet<>(BaseBuilders.enumerated(DataView.OpCode.class)
+                .values(DataView.OpCode.values())
+                .weights(1, 4, 5)
+                .build());
+
+        Assert.assertEquals(0, pojo.getSize());
+
+        Assert.assertNull(pojo.selectOne(new RandomSequence(1L)));
+
+    }
+
 
     @Test
     public void buildOperationFeedFromEmptyDataSetWithLowCreateProb() throws Exception {
@@ -62,20 +77,20 @@ public class DataSetTest {
                 .values(DataView.OpCode.values())
                 .weights(1, 4, 5)
                 .build());
-        final Flux<DataSet<Pojo>.Operation> flux = pojo.buildOperationFeed();
+        final Flux<DataSet<Pojo>.Operation> flux = pojo.buildOperationFeed(true);
 
         StepVerifier.create(flux.take(10).map(op -> Tuples.of(op.getEntry().getElementIndex(), op.getEntry().getElementVersion())))
                 .expectNext(
                         Tuples.of(0, (byte)1),
                         Tuples.of(0, (byte)2),
                         Tuples.of(0, (byte)3),
-                        Tuples.of(0, (byte)4),
-                        Tuples.of(0, (byte)5),
-                        Tuples.of(0, (byte)6),
+                        Tuples.of(0, (byte)-3),
                         Tuples.of(1, (byte)1),
                         Tuples.of(1, (byte)2),
-                        Tuples.of(0, (byte)-6),
-                        Tuples.of(1, (byte)3))
+                        Tuples.of(1, (byte)-2),
+                        Tuples.of(2, (byte)1),
+                        Tuples.of(2, (byte)-1),
+                        Tuples.of(3, (byte)1))
                 .verifyComplete();
     }
 
@@ -217,7 +232,7 @@ public class DataSetTest {
 
         }
 
-        final Iterator<DataSet<Pojo2>.Operation> iterator = pojo2DataSet.buildOperationFeed().toIterable(1).iterator();
+        final Iterator<DataSet<Pojo2>.Operation> iterator = pojo2DataSet.buildOperationFeed(false).toIterable(1).iterator();
 
 
         {

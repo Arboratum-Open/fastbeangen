@@ -1,13 +1,8 @@
 package com.arboratum.beangen.database;
 
-import com.arboratum.beangen.Generator;
-import com.arboratum.beangen.util.RandomSequence;
 import com.google.common.base.Stopwatch;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.SynchronousSink;
 
 import java.util.*;
-import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 /**
@@ -24,7 +19,7 @@ public class Database {
 
     public <T> DataView createUnionView(String name, String... names) {
         final DataView[] dataViews = Stream.of(names).map(this::getDataView).toArray(DataView[]::new);
-        final UnionView<T> tUnionView = new UnionView<>(dataViews);
+        final UnionDataView<T> tUnionView = new UnionDataView<>(dataViews);
         dataSets.put(name, tUnionView);
         return tUnionView;
     }
@@ -68,96 +63,4 @@ public class Database {
         System.out.println("Initialize database with total entries: " + count + " in " + stopwatch.stop());
     }
 
-    private static class UnionView<T> implements DataView<T> {
-
-        private final DataView[] children;
-        private final Class<T> type;
-
-        public UnionView(DataView[] dataViews) {
-            this.children = dataViews;
-            final Object[] types = Stream.of(children).map(DataView::getEntryType).distinct().toArray();
-
-            if (types.length > 1) throw new IllegalArgumentException("incompatible datasets");
-
-            this.type = (Class<T>) types[0];
-        }
-
-        @Override
-        public Class<T> getEntryType() {
-            return type;
-        }
-
-        @Override
-        public DataSet<T>.Entry selectOne(RandomSequence r) {
-            int index = selectChildIndexRandBySize(r);
-
-            return children[index].selectOne(r);
-        }
-
-        private int selectChildIndexRandBySize(RandomSequence r) {
-            long[] ranges = new long[children.length];
-            long acc = 0;
-            for (int i = 0, childrenLength = children.length; i < childrenLength; i++) {
-                acc += children[i].getSize();
-                ranges[i] = acc;
-            }
-
-            int index = Arrays.binarySearch(ranges, r.nextLong(acc));
-            if (index < 0) {
-                index = -index - 1;
-            }
-            return index;
-        }
-
-        @Override
-        public Generator<T> random() {
-            return new Generator<T>(getEntryType()) {
-                @Override
-                public T generate(RandomSequence register) {
-                    return selectOne(register).lastVersion().block();
-                }
-            };
-        }
-        @Override
-        public Flux<DataSet<T>.Entry> traverseDataSet(boolean includeDeleted) {
-            return Flux.fromArray(children).flatMap(dataView -> dataView.traverseDataSet(includeDeleted));
-        }
-
-        @Override
-        public Flux<DataSet<T>.Operation> buildOperationFeed() {
-            final Iterator<DataSet<T>.Operation>[] feeds = Stream.of(children)
-                    .map(DataView::buildOperationFeed)
-                    .map((operationFlux) -> operationFlux.toIterable(1))
-                    .map(Iterable::iterator)
-                    .toArray(Iterator[]::new);
-
-            return Flux.generate(new Consumer<SynchronousSink<DataSet<T>.Operation>>() {
-                final RandomSequence r = new RandomSequence(0);
-                @Override
-                public void accept(SynchronousSink<DataSet<T>.Operation> fluxSink) {
-                        int index = UnionView.this.selectChildIndexRandBySize(r);
-
-                        final Iterator<DataSet<T>.Operation> feed = feeds[index];
-
-                    try {
-                        if (feed.hasNext()) {
-                            fluxSink.next(feed.next());
-                        }
-                    } catch (Exception e) {
-                        if (e instanceof IllegalStateException) { // caused when we stop consuming
-                            fluxSink.complete();
-                        } else {
-                            fluxSink.error(e);
-                        }
-
-                    }
-                }
-                });
-        }
-
-        @Override
-        public int getSize() {
-            return Stream.of(children).mapToInt(DataView::getSize).sum();
-        }
-    }
 }

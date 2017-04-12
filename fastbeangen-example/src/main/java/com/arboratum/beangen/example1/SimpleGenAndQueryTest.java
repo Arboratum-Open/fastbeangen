@@ -169,7 +169,7 @@ public class SimpleGenAndQueryTest {
         final Flux<DataSet<Person>.Operation> cuds =
 
                 base.<Person>getDataView("persons")
-                    .buildOperationFeed()
+                    .buildOperationFeed(false)
                         .concatMap(operation -> {
                             if (operation.getSequenceId() <= lastDone) {
                                 operation.ack();

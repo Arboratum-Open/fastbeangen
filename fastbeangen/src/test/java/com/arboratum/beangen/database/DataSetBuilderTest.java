@@ -91,7 +91,7 @@ public class DataSetBuilderTest {
                 .build();
 
         Assert.assertEquals(10000000, build.getSize());
-        Assert.assertEquals(12505555, build.getLastIndex());
+        Assert.assertEquals(12489544, build.getLastIndex());
 
     }
 

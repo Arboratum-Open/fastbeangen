@@ -11,13 +11,19 @@ public interface DataView<ENTRY> {
 
     Class<ENTRY> getEntryType();
 
+    /**
+     * Select an entry from the DataView, if the DataView is empty it returns <code>null</code>
+     */
     DataSet<ENTRY>.Entry selectOne(RandomSequence r);
 
+    /**
+     * Generator that returns randomly selected entries of the DataView, if the DataView is empty it generates <code>null</code>
+     */
     Generator<ENTRY> random();
 
     Flux<DataSet<ENTRY>.Entry> traverseDataSet(boolean includeDeleted);
 
-    Flux<DataSet<ENTRY>.Operation> buildOperationFeed();
+    Flux<DataSet<ENTRY>.Operation> buildOperationFeed(boolean autoAck);
 
     int getSize();
 
