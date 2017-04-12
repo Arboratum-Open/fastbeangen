@@ -1,6 +1,13 @@
 
 # FastBeanGen -  Fast Random Data Generator
 
+## v0.1.8
+
+* [BUGFIX] fix failure to call selectOne on empty DataView (both DataSet and UnionDataView), now returns null if empty ([f923d143a9a3e21](https://github.com/tomasbjerre/git-changelog-gradle-plugin/commit/f923d143a9a3e21) - Geoffrey Picron - *2017-04-12 08:14:13*)
+* [BUGFIX] fix regression introduced in Montecarlo procedure to determine the version distribution ([928320a62f4808d](https://github.com/tomasbjerre/git-changelog-gradle-plugin/commit/928320a62f4808d) - Geoffrey Picron - *2017-04-12 08:08:59*)
+* [BUGFIX] added support of silently Unboxing primitive for setters in BeanGenerator ([c282e37f841ff06](https://github.com/tomasbjerre/git-changelog-gradle-plugin/commit/c282e37f841ff06) - Geoffrey Picron - *2017-04-12 08:06:11*)
+* [FEATURE] improved setter identification ([3bc512757249377](https://github.com/tomasbjerre/git-changelog-gradle-plugin/commit/3bc512757249377) - Geoffrey Picron - *2017-04-11 18:06:13*)
+* [CHORE] generate pom valid for Maven central publication ([519f160c2324625](https://github.com/tomasbjerre/git-changelog-gradle-plugin/commit/519f160c2324625) - Geoffrey Picron - *2017-04-11 18:04:57*)
 
 ## v0.1.7
 
