@@ -1,18 +1,14 @@
 package com.arboratum.beangen.core;
 
 import com.arboratum.beangen.Generator;
-import com.google.common.io.Resources;
+import com.arboratum.beangen.util.DistributionUtils;
 import org.apache.commons.math3.stat.Frequency;
 import org.apache.commons.math3.util.MathArrays;
-import org.apache.commons.math3.util.Pair;
 
-import java.io.*;
 import java.util.Arrays;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 /**
  * Created by gpicron on 08/08/2016.
@@ -27,11 +23,6 @@ public class EnumeratedDistributionGeneratorBuilder<CLASS> extends AbstractGener
         super(fieldType);
     }
 
-    private static InputStream getResourceAsStream(String resource) throws IOException {
-        final InputStream resourceAsStream = Resources.getResource(EnumeratedDistributionGeneratorBuilder.class, resource).openStream();
-        if (resourceAsStream == null) throw new IllegalArgumentException("Resource not found : " + resource);
-        return resourceAsStream;
-    }
 
 
     @Override
@@ -116,17 +107,27 @@ public class EnumeratedDistributionGeneratorBuilder<CLASS> extends AbstractGener
 
         return this;
     }
-
     public EnumeratedDistributionGeneratorBuilder from(Frequency frequency) {
+        return from(frequency, v -> (CLASS) v);
+    }
+
+    public <K extends Comparable<K>>EnumeratedDistributionGeneratorBuilder from(Frequency frequency, final Function<K, CLASS> keyToValueMapper) {
         final int size = frequency.getUniqueCount();
         this.values = (CLASS[]) new Object[size];
         this.weights = new double[size];
+        boolean hasWeights = false;
         final Iterator<Map.Entry<Comparable<?>, Long>> entryIterator = frequency.entrySetIterator();
         for (int i = 0; i < size; i++) {
-            final Map.Entry<Comparable<?>, Long> e = entryIterator.next();
-            values[i] = (CLASS) e.getKey();
-            weights[i] = e.getValue();
+            final Map.Entry<Comparable<?>,Long> e =  entryIterator.next();
+            values[i] = keyToValueMapper.apply((K) e.getKey());
+            final long value = e.getValue();
+
+            if (value != 1L) hasWeights = true;
+
+            weights[i] = value;
         }
+
+        if (!hasWeights) weights = null;
 
         return this;
     }
@@ -137,31 +138,9 @@ public class EnumeratedDistributionGeneratorBuilder<CLASS> extends AbstractGener
     }
 
     public EnumeratedDistributionGeneratorBuilder valuesFromCSVResource(String resource, final Function<String, CLASS> keyToValueMapper) {
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(getResourceAsStream(resource), "UTF-8"))) {
-            final List<Pair<String, Double>> pairs = reader.lines()
-                    .map(String::trim)
-                    .filter(line -> !line.isEmpty() && !line.startsWith("#"))
-                    .map(line -> line.split(","))
-                    .map(tokens -> {
-                        if (tokens.length == 2) {
-                            return new Pair<>(tokens[0], Double.parseDouble(tokens[1]));
-                        } else {
-                            return new Pair<>(tokens[0], 1.0);
-                        }
-                    }).collect(Collectors.toList());
+        final Frequency frequency = DistributionUtils.fromCsvResource(resource);
 
-            if (pairs.stream().mapToDouble(p -> p.getSecond()).filter(value -> value != 1.0).findAny().isPresent()) {
-                this.weights = pairs.stream().mapToDouble(p -> p.getSecond()).toArray();
-            }
-
-            this.values = (CLASS[]) pairs.stream().map(p -> p.getFirst()).map(keyToValueMapper).toArray();
-
-            return this;
-        } catch (UnsupportedEncodingException e) {
-            throw new IllegalArgumentException("invalid resource file :" + resource, e);
-        } catch (IOException e) {
-            throw new IllegalArgumentException("invalid resource file :" + resource, e);
-        }
+        return from(frequency, keyToValueMapper);
     }
 
     public EnumeratedDistributionGeneratorBuilder generators(AbstractGeneratorBuilder<? extends CLASS>... values) {

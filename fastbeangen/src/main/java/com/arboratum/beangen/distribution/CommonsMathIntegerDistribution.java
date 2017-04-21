@@ -12,7 +12,7 @@ import java.util.function.ToLongFunction;
 /**
  * Created by gpicron on 08/08/2016.
  */
-public class CommonsMathIntegerDistribution<VALUE extends Number> extends IntegerDistribution<VALUE> {
+public strictfp class CommonsMathIntegerDistribution<VALUE extends Number> extends IntegerDistribution<VALUE> {
 
     private final boolean tabulated;
     private final org.apache.commons.math3.distribution.IntegerDistribution distribution;
@@ -40,7 +40,7 @@ public class CommonsMathIntegerDistribution<VALUE extends Number> extends Intege
                 final double v = distribution.cumulativeProbability(i);
                 if (v - lastCum < RandomSequence.DOUBLE_STEP) continue;
                 lastCum = v;
-                cumProb.add(new Pair<Integer, Double>(i, v));
+                cumProb.add(new Pair<>(i, v));
             }
 
             final int[] inverseCumulatedProbability = new int[cumProb.size()];

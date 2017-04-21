@@ -12,7 +12,7 @@ import java.util.HashMap;
 public class DistributionUtilsTest {
     @Test
     public void convert() throws Exception {
-        final HashMap<Comparable<?>, Number> counts = new HashMap<>();
+        final HashMap<String, Number> counts = new HashMap<>();
         counts.put("ABC", 7);
         counts.put("DEF", 8);
         final Frequency frequency = DistributionUtils.convert(counts);

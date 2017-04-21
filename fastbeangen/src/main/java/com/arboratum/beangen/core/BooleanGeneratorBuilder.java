@@ -5,7 +5,7 @@ import com.google.common.collect.ImmutableSet;
 /**
  * Created by gpicron on 08/08/2016.
  */
-public class BooleanGeneratorBuilder extends AbstractGeneratorBuilder<Boolean> {
+public strictfp class BooleanGeneratorBuilder extends AbstractGeneratorBuilder<Boolean> {
     public static final ImmutableSet<Class> SUPPORTED_TYPES = ImmutableSet.of(
             Boolean.TYPE, Boolean.class
     );

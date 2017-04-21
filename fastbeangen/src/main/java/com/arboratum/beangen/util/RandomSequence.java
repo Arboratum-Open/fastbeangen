@@ -8,7 +8,7 @@ package com.arboratum.beangen.util;
  *
  * Created by gpicron on 08/08/2016.
  */
-public class RandomSequence {
+public strictfp class RandomSequence {
     private final long seed;
     private long register;
 
@@ -106,7 +106,7 @@ public class RandomSequence {
 
         long bits = (register = shift(register));
 
-        return (bits >>> 11) * DOUBLE_STEP;
+        return  (bits >>> 11) * DOUBLE_STEP;
     }
 
     private long next(int nbits) {

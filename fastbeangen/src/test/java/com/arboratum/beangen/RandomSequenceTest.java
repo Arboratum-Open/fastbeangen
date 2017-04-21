@@ -9,15 +9,15 @@ import org.junit.Test;
 /**
  * Created by gpicron on 08/08/2016.
  */
-public class RandomSequenceTest {
+public strictfp class RandomSequenceTest {
 
     public static final int COUNT_ITER = 1000000;
 
     @Test
     public void testDouble() {
         final RandomSequence randomSequence = new RandomSequence(31L);
-        Assert.assertEquals(0.5092816903606325, randomSequence.nextDouble(), 0x1.0p-53);
-        Assert.assertEquals(0.10700218190247246, randomSequence.nextDouble(), 0x1.0p-53);
+        Assert.assertEquals(0.7439010164503713, randomSequence.nextDouble(), 0x1.0p-53);
+        Assert.assertEquals(0.433157715909132, randomSequence.nextDouble(), 0x1.0p-53);
 
         Stopwatch stopwatch = Stopwatch.createStarted();
 

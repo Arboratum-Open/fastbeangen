@@ -21,7 +21,7 @@ import static org.junit.Assert.assertThat;
 /**
  * Created by gpicron on 07/08/2016.
  */
-public class GeneratorTest {
+public strictfp class GeneratorTest {
     public static final int ROUNDS = 1000 * 1024;
 
     @Test

@@ -16,7 +16,7 @@ import java.util.Map;
 /**
  * Created by gpicron on 11/02/2017.
  */
-public class DataSetBuilder<T> {
+public strictfp class DataSetBuilder<T> {
 
 
     private int numInitialEntries;
