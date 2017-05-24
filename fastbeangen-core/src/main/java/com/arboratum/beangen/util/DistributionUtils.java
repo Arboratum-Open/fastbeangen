@@ -38,7 +38,7 @@ public final class DistributionUtils {
      * The API use frequently Frequency object from commons math.  Load a resource CSV file into a Frequency object of (String, Long)
      *
      * Rows with 1 columns, (String, 1)
-     * Rows with >= 2 columns, (String, parsed long col 2)
+     * Rows with &gt;= 2 columns, (String, parsed long col 2)
      *
      * Expended encoding is UTF-8
      *

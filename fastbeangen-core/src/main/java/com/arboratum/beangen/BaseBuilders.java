@@ -59,10 +59,10 @@ public final class BaseBuilders {
         return new CharSequenceGeneratorBuilder(clazz);
     }
 
-    public static <COL extends List<VALUE>, VALUE> CollectionGeneratorBuilder<COL> aList() {
+    public static <COL extends List<VALUE>, VALUE> CollectionGeneratorBuilder<VALUE, COL> aList() {
         return new CollectionGeneratorBuilder(List.class);
     }
-    public static <COL extends Set<VALUE>, VALUE> CollectionGeneratorBuilder<COL> aSet() {
+    public static <COL extends Set<VALUE>, VALUE> CollectionGeneratorBuilder<VALUE, COL> aSet() {
         return new CollectionGeneratorBuilder(Set.class);
     }
 
