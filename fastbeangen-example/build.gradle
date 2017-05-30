@@ -11,7 +11,7 @@ apply plugin: 'org.springframework.boot'
 
 
 dependencies {
-    compile project(":fastbeangen-core")
+    compile project(":fastbeangen")
     compile 'io.projectreactor:reactor-core:3.0.4.RELEASE'
 // https://mvnrepository.com/artifact/org.apache.commons/commons-pool2
     compile group: 'org.apache.commons', name: 'commons-pool2', version: '2.4.2'

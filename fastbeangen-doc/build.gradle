@@ -1,5 +1,5 @@
 dependencies {
-    compile project(":fastbeangen-core")
+    compile project(":fastbeangen")
     compile group: 'fr.opensagres.xdocreport', name: 'fr.opensagres.xdocreport.document', version: '2.0.0'
     compile group: 'fr.opensagres.xdocreport', name: 'fr.opensagres.xdocreport.template.velocity', version: '2.0.0'
     compile group: 'fr.opensagres.xdocreport', name: 'fr.opensagres.xdocreport.document.docx', version: '2.0.0'

@@ -1,5 +1,5 @@
 rootProject.name = 'fastbeangen'
 
-include "fastbeangen-core"
+include "fastbeangen"
 include "fastbeangen-example"
 include "fastbeangen-doc"
