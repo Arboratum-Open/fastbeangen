@@ -6,11 +6,14 @@ import com.google.common.collect.ImmutableSet;
 import org.apache.commons.math3.stat.Frequency;
 
 import java.util.*;
+import java.util.logging.Logger;
 
 /**
  * Created by gpicron on 08/08/2016.
  */
 public class CollectionGeneratorBuilder<VALUE, COL extends Collection<VALUE>> extends AbstractGeneratorBuilder<COL> {
+    private static final Logger log = Logger.getLogger(CollectionGeneratorBuilder.class.getName());
+
 
     public static final ImmutableSet<Class> SUPPORTED_TYPES = ImmutableSet.of(
             List.class, Set.class
@@ -80,8 +83,12 @@ public class CollectionGeneratorBuilder<VALUE, COL extends Collection<VALUE>> ex
                 int size = sizeGenerator.apply(randomSequence).intValue();
                 Set r = new HashSet(size);
 
-                for (int i = 0; i < size; i++) {
+                for (int i = 0; r.size() < size; i++) {
                     r.add(valueGenerator.generate(randomSequence));
+
+                    if (i > 10 * size) {
+                        log.warning("Seems we cannot generate a value for the set that doesn't exist yet. Stop trying.");
+                    }
                 }
                 return (COL)r;
             });

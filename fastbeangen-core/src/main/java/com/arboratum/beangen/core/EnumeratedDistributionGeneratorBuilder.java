@@ -90,28 +90,28 @@ public class EnumeratedDistributionGeneratorBuilder<CLASS> extends AbstractGener
 
     }
 
-    public EnumeratedDistributionGeneratorBuilder weights(double... weights) {
+    public EnumeratedDistributionGeneratorBuilder<CLASS> weights(double... weights) {
         this.weights = weights;
 
         return this;
     }
-    public EnumeratedDistributionGeneratorBuilder weights(long... weights) {
+    public EnumeratedDistributionGeneratorBuilder<CLASS> weights(long... weights) {
         this.weights = Arrays.stream(weights).mapToDouble(l -> (double)l).toArray();
 
         return this;
     }
 
 
-    public EnumeratedDistributionGeneratorBuilder values(CLASS... values) {
+    public EnumeratedDistributionGeneratorBuilder<CLASS> values(CLASS... values) {
         this.values = values;
 
         return this;
     }
-    public EnumeratedDistributionGeneratorBuilder from(Frequency frequency) {
+    public EnumeratedDistributionGeneratorBuilder<CLASS> from(Frequency frequency) {
         return from(frequency, v -> (CLASS) v);
     }
 
-    public <K extends Comparable<K>>EnumeratedDistributionGeneratorBuilder from(Frequency frequency, final Function<K, CLASS> keyToValueMapper) {
+    public <K extends Comparable<K>> EnumeratedDistributionGeneratorBuilder<CLASS> from(Frequency frequency, final Function<K, CLASS> keyToValueMapper) {
         final int size = frequency.getUniqueCount();
         this.values = (CLASS[]) new Object[size];
         this.weights = new double[size];
@@ -133,17 +133,17 @@ public class EnumeratedDistributionGeneratorBuilder<CLASS> extends AbstractGener
     }
 
 
-    public EnumeratedDistributionGeneratorBuilder valuesFromCSVResource(String resource) {
+    public EnumeratedDistributionGeneratorBuilder<CLASS> valuesFromCSVResource(String resource) {
         return valuesFromCSVResource(resource, v -> (CLASS) v);
     }
 
-    public EnumeratedDistributionGeneratorBuilder valuesFromCSVResource(String resource, final Function<String, CLASS> keyToValueMapper) {
+    public EnumeratedDistributionGeneratorBuilder<CLASS> valuesFromCSVResource(String resource, final Function<String, CLASS> keyToValueMapper) {
         final Frequency frequency = DistributionUtils.fromCsvResource(resource);
 
         return from(frequency, keyToValueMapper);
     }
 
-    public EnumeratedDistributionGeneratorBuilder generators(AbstractGeneratorBuilder<? extends CLASS>... values) {
+    public EnumeratedDistributionGeneratorBuilder<CLASS> generators(AbstractGeneratorBuilder<? extends CLASS>... values) {
         this.valueBuilders = values;
 
         return this;

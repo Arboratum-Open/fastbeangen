@@ -19,3 +19,4 @@ gradle.properties
 CHANGELOG_tmp.md
 working
 working-mathcing
+out/

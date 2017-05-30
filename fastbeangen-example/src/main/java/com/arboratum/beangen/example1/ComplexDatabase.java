@@ -66,12 +66,11 @@ public class ComplexDatabase {
                 .weights(1, 2)
                 .build();
 
-
         // configure the generators of relations
         final Generator<Relation> relationGenerator = aBean(Relation.class)
                 .injectIdIn("id") // we don't generate the list of persons as we will have to memoize it because it is state dependent
                 .build();
-        final Generator<UpdateOf<Relation>> relationUpdateGenerator = enumerated(UpdateOf.class)
+        final Generator<UpdateOf> relationUpdateGenerator = enumerated(UpdateOf.class)
                 .generators(
                         aBean(JoinRelationCommand.class), // we don't generate the added person as we will have to memoize it because it is state dependent
                         aBean(LeaveRelationCommand.class).with("index", aInteger().uniform(0, 1000)))
