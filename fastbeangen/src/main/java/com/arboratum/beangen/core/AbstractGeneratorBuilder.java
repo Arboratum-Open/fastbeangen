@@ -3,6 +3,8 @@ package com.arboratum.beangen.core;
 import com.arboratum.beangen.Generator;
 import com.arboratum.beangen.util.RandomSequence;
 
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -116,13 +118,26 @@ public abstract class AbstractGeneratorBuilder<CLASS> {
     }
 
     public <TARGET> AbstractGeneratorBuilder<TARGET> convert(Function<CLASS, TARGET> conversion) {
+
+        final Type type = conversion.getClass().getGenericSuperclass();
+        final Class<TARGET> targetType;
+        if (type instanceof ParameterizedType) {
+            targetType = (Class<TARGET>) ((ParameterizedType) type).getActualTypeArguments()[1];
+        } else {
+            targetType = (Class<TARGET>) Object.class;
+        }
+
+        return convert(conversion, targetType);
+    }
+
+    public <TARGET> AbstractGeneratorBuilder<TARGET> convert(Function<CLASS, TARGET> conversion, Class<TARGET> targetType) {
         final Generator<CLASS> source = this.build();
 
-        return new AbstractGeneratorBuilder(Object.class) {
+        return new AbstractGeneratorBuilder(targetType) {
 
             @Override
             public Generator build() {
-                return new Generator(Object.class) {
+                return new Generator(targetType) {
                     @Override
                     public Object generate(RandomSequence register) {
                         return conversion.apply(source.generate(register));
@@ -132,6 +147,7 @@ public abstract class AbstractGeneratorBuilder<CLASS> {
             }
         };
     }
+
     public AbstractGeneratorBuilder<String> convertToString() {
         final Generator<CLASS> source = this.build();
 

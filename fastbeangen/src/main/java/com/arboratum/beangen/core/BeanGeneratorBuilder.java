@@ -7,9 +7,13 @@ import com.arboratum.beangen.util.ValueAssigner;
 import com.esotericsoftware.reflectasm.ConstructorAccess;
 import com.esotericsoftware.reflectasm.MethodAccess;
 import com.google.common.primitives.Primitives;
+import reactor.util.function.Tuple2;
+import reactor.util.function.Tuples;
 
 import java.lang.reflect.Modifier;
+import java.lang.reflect.ParameterizedType;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.arboratum.beangen.BaseBuilders.aBoolean;
 
@@ -20,6 +24,7 @@ public class BeanGeneratorBuilder<CLASS> extends AbstractGeneratorBuilder<CLASS>
     private final MethodAccess access;
 
     private final SortedMap<String, Generator> populators = new TreeMap<>();
+    private final LinkedHashMap<Tuple2<String,String>, Generator> populators2 = new LinkedHashMap<>();
     private String idfield;
 
     public BeanGeneratorBuilder(Class<CLASS> type) {
@@ -32,11 +37,13 @@ public class BeanGeneratorBuilder<CLASS> extends AbstractGeneratorBuilder<CLASS>
     @Override
     public Generator<CLASS> build() {
         final ConstructorAccess<CLASS> constructorAccess = ConstructorAccess.get(fieldType);
-        final Populator[] pops = populators.entrySet().stream()
-                .map(e -> {
-                    return new Populator(getValueAssigner(e.getKey()), e.getValue());
-                })
-                .toArray(Populator[]::new);
+        final ArrayList<Populator> pops = new ArrayList<>();
+        populators.entrySet().stream()
+                .map(e -> new Populator(getValueAssigner(e.getKey()), e.getValue()))
+                .collect(Collectors.toCollection(() -> pops));
+        populators2.entrySet().stream()
+                .map(e -> new Populator(getValueAssigner(e.getKey().getT1(), e.getKey().getT2()), e.getValue()))
+                .collect(Collectors.toCollection(() -> pops));
 
         setup(seq -> {
             CLASS o = constructorAccess.newInstance();
@@ -128,6 +135,43 @@ public class BeanGeneratorBuilder<CLASS> extends AbstractGeneratorBuilder<CLASS>
         }
 
         return this;
+    }
+
+    public <FIELD1,FIELD2> BeanGeneratorBuilder<CLASS> with(String fieldName1, String fieldName2, AbstractGeneratorBuilder<Tuple2<FIELD1,FIELD2>> generator) {
+        return with(fieldName1,fieldName2, generator.build());
+    }
+
+    public <FIELD1,FIELD2> BeanGeneratorBuilder<CLASS> with(String fieldName1, String fieldName2, Generator<Tuple2<FIELD1,FIELD2>> generator) {
+        final ValueAssigner<CLASS,Tuple2<FIELD1,FIELD2>> valueAssigner = getValueAssigner(fieldName1, fieldName2);
+        if (valueAssigner.accept(generator.getType())) {
+            populators2.put(Tuples.of(fieldName1,fieldName2), generator);
+        } else {
+            throw new IllegalArgumentException("The field '" + fieldName1 + "," + fieldName2 + "' cannot be set to type accept with type " + generator.getType());
+        }
+
+        return this;
+    }
+
+    private <CLASS, FIELD1,FIELD2> ValueAssigner<CLASS,Tuple2<FIELD1,FIELD2>> getValueAssigner(String fieldName1, String fieldName2) {
+        final ValueAssigner<CLASS, FIELD1> valueAssigner1 = getValueAssigner(fieldName1);
+        final ValueAssigner<CLASS, FIELD2> valueAssigner2 = getValueAssigner(fieldName2);
+        return new ValueAssigner<CLASS, Tuple2<FIELD1, FIELD2>>() {
+            @Override
+            public void assign(CLASS object, Tuple2<FIELD1, FIELD2> values) {
+                valueAssigner1.assign(object, values.getT1());
+                valueAssigner2.assign(object, values.getT2());
+            }
+
+            @Override
+            public boolean accept(Class<? extends Tuple2<FIELD1, FIELD2>> type) {
+                final ParameterizedType typeInfo = (ParameterizedType) type.getGenericSuperclass();
+                if (typeInfo == null) return true;
+
+                final Class<FIELD1> type1 = (Class<FIELD1>) typeInfo.getActualTypeArguments()[0];
+                final Class<FIELD2> type2 = (Class<FIELD2>) typeInfo.getActualTypeArguments()[1];
+                return valueAssigner1.accept(type1) && valueAssigner2.accept(type2);
+            }
+        };
     }
 
     private <CLASS,FIELD> ValueAssigner<CLASS,FIELD> getValueAssigner(String fieldName) {

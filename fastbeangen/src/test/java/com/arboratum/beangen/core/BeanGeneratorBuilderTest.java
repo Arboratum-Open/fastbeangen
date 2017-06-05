@@ -6,11 +6,15 @@ import com.arboratum.beangen.util.DistributionUtils;
 import org.apache.commons.math3.stat.Frequency;
 import org.junit.Assert;
 import org.junit.Test;
+import reactor.util.function.Tuple2;
+import reactor.util.function.Tuples;
 
 import java.util.Map;
 import java.util.Random;
 import java.util.TreeMap;
+import java.util.function.Function;
 
+import static com.arboratum.beangen.BaseBuilders.aInteger;
 import static com.arboratum.beangen.BaseBuilders.aString;
 
 /**
@@ -113,6 +117,48 @@ public class BeanGeneratorBuilderTest {
             final TestBean bean1 = generator.generate(id);
             final TestBean bean2 = generator2.generate(id);
             Assert.assertTrue("Idempotent test failed : id=" + id, bean1.equals(bean2));
+        }
+
+
+    }
+
+    @Test
+    public void with2FieldGeneratedByOneGenerator() throws Exception {
+        final AbstractGeneratorBuilder<Tuple2<Long, String>> fieldGenerator =
+                aInteger()
+                        .uniform(0, 100)
+                        .convert(new Function<Integer, Tuple2<Long, String>>() {
+                            @Override
+                            public Tuple2<Long, String> apply(Integer n) {
+                                return Tuples.of((long) n, Integer.toString(n));
+                            }
+                        });
+        final Generator<TestBean> generator = BaseBuilders.aBean(TestBean.class)
+                .with("id","name", fieldGenerator)
+                .build();
+
+        final TestBean bean = generator.generate(0);
+        Assert.assertEquals("bean 0 is not matching :" + bean, 52, bean.getId());
+        Assert.assertEquals("bean 0 is not matching :" + bean, "52", bean.getName());
+
+        final AbstractGeneratorBuilder<Tuple2<Long, String>> fieldGenerator2 =
+                aInteger()
+                        .uniform(0, 100)
+                        .convert(new Function<Integer, Tuple2<Long, String>>() {
+                            @Override
+                            public Tuple2<Long, String> apply(Integer n) {
+                                return Tuples.of((long) n, Integer.toString(n));
+                            }
+                        });
+        final Generator<TestBean> generator2 = BaseBuilders.aBean(TestBean.class)
+                .with("id","name", fieldGenerator2)
+                .build();
+        Random rand = new Random();
+        for (int i = 0; i < 100; i++) {
+            long id = Math.abs(rand.nextLong());
+            final TestBean bean1 = generator.generate(id);
+            final TestBean bean2 = generator2.generate(id);
+            Assert.assertEquals("Idempotent test failed : id=" + id, bean1, bean2);
         }
 
 
