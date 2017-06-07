@@ -8,6 +8,7 @@ import com.esotericsoftware.reflectasm.ConstructorAccess;
 import com.esotericsoftware.reflectasm.MethodAccess;
 import com.google.common.primitives.Primitives;
 import reactor.util.function.Tuple2;
+import reactor.util.function.Tuple3;
 import reactor.util.function.Tuples;
 
 import java.lang.reflect.Modifier;
@@ -24,7 +25,7 @@ public class BeanGeneratorBuilder<CLASS> extends AbstractGeneratorBuilder<CLASS>
     private final MethodAccess access;
 
     private final SortedMap<String, Generator> populators = new TreeMap<>();
-    private final LinkedHashMap<Tuple2<String,String>, Generator> populators2 = new LinkedHashMap<>();
+    private final LinkedHashMap<Object, Generator> populators2 = new LinkedHashMap<>();
     private String idfield;
 
     public BeanGeneratorBuilder(Class<CLASS> type) {
@@ -42,7 +43,18 @@ public class BeanGeneratorBuilder<CLASS> extends AbstractGeneratorBuilder<CLASS>
                 .map(e -> new Populator(getValueAssigner(e.getKey()), e.getValue()))
                 .collect(Collectors.toCollection(() -> pops));
         populators2.entrySet().stream()
-                .map(e -> new Populator(getValueAssigner(e.getKey().getT1(), e.getKey().getT2()), e.getValue()))
+                .map(e -> {
+                    if (e.getKey() instanceof Tuple3) {
+                        Tuple3<String, String, String> k = (Tuple3<String, String, String>) e.getKey();
+                        return new Populator(getValueAssigner(k.getT1(), k.getT2(), k.getT3()), e.getValue());
+                    } else if (e.getKey() instanceof Tuple2) {
+                        Tuple2<String,String> k = (Tuple2<String,String>) e.getKey();
+                        return new Populator(getValueAssigner(k.getT1(), k.getT2()), e.getValue());
+                    } else {
+                        throw new RuntimeException("bug");
+                    }
+
+                })
                 .collect(Collectors.toCollection(() -> pops));
 
         setup(seq -> {
@@ -140,11 +152,24 @@ public class BeanGeneratorBuilder<CLASS> extends AbstractGeneratorBuilder<CLASS>
     public <FIELD1,FIELD2> BeanGeneratorBuilder<CLASS> with(String fieldName1, String fieldName2, AbstractGeneratorBuilder<Tuple2<FIELD1,FIELD2>> generator) {
         return with(fieldName1,fieldName2, generator.build());
     }
+    public <FIELD1,FIELD2, FIELD3> BeanGeneratorBuilder<CLASS> with(String fieldName1, String fieldName2, String fieldName3, AbstractGeneratorBuilder<Tuple3<FIELD1,FIELD2,FIELD3>> generator) {
+        return with(fieldName1,fieldName2, fieldName3, generator.build());
+    }
 
     public <FIELD1,FIELD2> BeanGeneratorBuilder<CLASS> with(String fieldName1, String fieldName2, Generator<Tuple2<FIELD1,FIELD2>> generator) {
         final ValueAssigner<CLASS,Tuple2<FIELD1,FIELD2>> valueAssigner = getValueAssigner(fieldName1, fieldName2);
         if (valueAssigner.accept(generator.getType())) {
             populators2.put(Tuples.of(fieldName1,fieldName2), generator);
+        } else {
+            throw new IllegalArgumentException("The field '" + fieldName1 + "," + fieldName2 + "' cannot be set to type accept with type " + generator.getType());
+        }
+
+        return this;
+    }
+    public <FIELD1,FIELD2, FIELD3> BeanGeneratorBuilder<CLASS> with(String fieldName1, String fieldName2, String fieldName3, Generator<Tuple3<FIELD1,FIELD2, FIELD3>> generator) {
+        final ValueAssigner<CLASS,Tuple3<FIELD1,FIELD2,FIELD3>> valueAssigner = getValueAssigner(fieldName1, fieldName2, fieldName3);
+        if (valueAssigner.accept(generator.getType())) {
+            populators2.put(Tuples.of(fieldName1,fieldName2,fieldName3), generator);
         } else {
             throw new IllegalArgumentException("The field '" + fieldName1 + "," + fieldName2 + "' cannot be set to type accept with type " + generator.getType());
         }
@@ -170,6 +195,30 @@ public class BeanGeneratorBuilder<CLASS> extends AbstractGeneratorBuilder<CLASS>
                 final Class<FIELD1> type1 = (Class<FIELD1>) typeInfo.getActualTypeArguments()[0];
                 final Class<FIELD2> type2 = (Class<FIELD2>) typeInfo.getActualTypeArguments()[1];
                 return valueAssigner1.accept(type1) && valueAssigner2.accept(type2);
+            }
+        };
+    }
+    private <CLASS, FIELD1,FIELD2,FIELD3> ValueAssigner<CLASS,Tuple3<FIELD1,FIELD2,FIELD3>> getValueAssigner(String fieldName1, String fieldName2, String fieldName3) {
+        final ValueAssigner<CLASS, FIELD1> valueAssigner1 = getValueAssigner(fieldName1);
+        final ValueAssigner<CLASS, FIELD2> valueAssigner2 = getValueAssigner(fieldName2);
+        final ValueAssigner<CLASS, FIELD3> valueAssigner3 = getValueAssigner(fieldName3);
+        return new ValueAssigner<CLASS, Tuple3<FIELD1,FIELD2,FIELD3>>() {
+            @Override
+            public void assign(CLASS object, Tuple3<FIELD1,FIELD2,FIELD3> values) {
+                valueAssigner1.assign(object, values.getT1());
+                valueAssigner2.assign(object, values.getT2());
+                valueAssigner3.assign(object, values.getT3());
+            }
+
+            @Override
+            public boolean accept(Class<? extends Tuple3<FIELD1,FIELD2,FIELD3>> type) {
+                final ParameterizedType typeInfo = (ParameterizedType) type.getGenericSuperclass();
+                if (typeInfo == null) return true;
+
+                final Class<FIELD1> type1 = (Class<FIELD1>) typeInfo.getActualTypeArguments()[0];
+                final Class<FIELD2> type2 = (Class<FIELD2>) typeInfo.getActualTypeArguments()[1];
+                final Class<FIELD3> type3 = (Class<FIELD3>) typeInfo.getActualTypeArguments()[2];
+                return valueAssigner1.accept(type1) && valueAssigner2.accept(type2) && valueAssigner3.accept(type3);
             }
         };
     }

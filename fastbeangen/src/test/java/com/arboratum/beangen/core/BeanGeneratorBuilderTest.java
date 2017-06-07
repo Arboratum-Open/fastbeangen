@@ -7,6 +7,7 @@ import org.apache.commons.math3.stat.Frequency;
 import org.junit.Assert;
 import org.junit.Test;
 import reactor.util.function.Tuple2;
+import reactor.util.function.Tuple3;
 import reactor.util.function.Tuples;
 
 import java.util.Map;
@@ -25,6 +26,9 @@ public class BeanGeneratorBuilderTest {
     public static class TestBean {
         private long id;
         private String name;
+
+
+        private long idx3;
 
         public TestBean() {
         }
@@ -74,6 +78,15 @@ public class BeanGeneratorBuilderTest {
         public String toString() {
             return "com.arboratum.beangen.core.BeanGeneratorBuilderTest.TestBean(id=" + this.getId() + ", name=" + this.getName() + ")";
         }
+
+        public void setIdx3(long idx3) {
+            this.idx3 = idx3;
+        }
+
+        public long getIdx3() {
+            return idx3;
+        }
+
     }
 
     @Test
@@ -82,7 +95,7 @@ public class BeanGeneratorBuilderTest {
 
         final TestBean bean = generator.generate(0);
         Assert.assertEquals("bean 0 is not matching :" + bean, -2701295953664104481L, bean.getId());
-        Assert.assertEquals("bean 0 is not matching :" + bean, "8OPSX85ojpvXYl", bean.getName());
+        Assert.assertEquals("bean 0 is not matching :" + bean, "OPSX85ojpv", bean.getName());
 
 
         final Generator<TestBean> generator2 = BaseBuilders.aBean(TestBean.class).withDefaultFieldPopulators().build();
@@ -105,7 +118,7 @@ public class BeanGeneratorBuilderTest {
 
         final TestBean bean = generator.generate(0);
         Assert.assertEquals("bean 0 is not matching :" + bean, -2701295953664104481L, bean.getId());
-        Assert.assertEquals("bean 0 is not matching :" + bean, "BAB", bean.getName());
+        Assert.assertEquals("bean 0 is not matching :" + bean, "ABB", bean.getName());
 
 
         final Generator<TestBean> generator2 = BaseBuilders.aBean(TestBean.class)
@@ -152,6 +165,49 @@ public class BeanGeneratorBuilderTest {
                         });
         final Generator<TestBean> generator2 = BaseBuilders.aBean(TestBean.class)
                 .with("id","name", fieldGenerator2)
+                .build();
+        Random rand = new Random();
+        for (int i = 0; i < 100; i++) {
+            long id = Math.abs(rand.nextLong());
+            final TestBean bean1 = generator.generate(id);
+            final TestBean bean2 = generator2.generate(id);
+            Assert.assertEquals("Idempotent test failed : id=" + id, bean1, bean2);
+        }
+
+
+    }
+
+    @Test
+    public void with3FieldGeneratedByOneGenerator() throws Exception {
+        final AbstractGeneratorBuilder<Tuple3<Long, String, Long>> fieldGenerator =
+                aInteger()
+                        .uniform(0, 100)
+                        .convert(new Function<Integer, Tuple3<Long, String, Long>>() {
+                            @Override
+                            public Tuple3<Long, String, Long> apply(Integer n) {
+                                return Tuples.of((long) n, Integer.toString(n), (long)n * 3);
+                            }
+                        });
+        final Generator<TestBean> generator = BaseBuilders.aBean(TestBean.class)
+                .with("id","name", "idx3", fieldGenerator)
+                .build();
+
+        final TestBean bean = generator.generate(0);
+        Assert.assertEquals("bean 0 is not matching :" + bean, 52, bean.getId());
+        Assert.assertEquals("bean 0 is not matching :" + bean, "52", bean.getName());
+        Assert.assertEquals("bean 0 is not matching :" + bean, 52*3, bean.idx3);
+
+        final AbstractGeneratorBuilder<Tuple3<Long, String, Long>> fieldGenerator2 =
+                aInteger()
+                        .uniform(0, 100)
+                        .convert(new Function<Integer, Tuple3<Long, String, Long>>() {
+                            @Override
+                            public Tuple3<Long, String, Long> apply(Integer n) {
+                                return Tuples.of((long) n, Integer.toString(n), (long)n * 3);
+                            }
+                        });
+        final Generator<TestBean> generator2 = BaseBuilders.aBean(TestBean.class)
+                .with("id","name","idx3", fieldGenerator2)
                 .build();
         Random rand = new Random();
         for (int i = 0; i < 100; i++) {
