@@ -1,6 +1,7 @@
 package com.arboratum.beangen.core;
 
 import com.arboratum.beangen.Generator;
+import com.arboratum.beangen.database.UpdateOf;
 import com.arboratum.beangen.util.Populator;
 import com.arboratum.beangen.util.RandomSequence;
 import com.arboratum.beangen.util.ValueAssigner;
@@ -27,6 +28,7 @@ public class BeanGeneratorBuilder<CLASS> extends AbstractGeneratorBuilder<CLASS>
     private final SortedMap<String, Generator> populators = new TreeMap<>();
     private final LinkedHashMap<Object, Generator> populators2 = new LinkedHashMap<>();
     private String idfield;
+    private List<Generator<CombinedFieldValue<CLASS>>> updateOfPopulators = new ArrayList();
 
     public BeanGeneratorBuilder(Class<CLASS> type) {
         super(type);
@@ -56,6 +58,20 @@ public class BeanGeneratorBuilder<CLASS> extends AbstractGeneratorBuilder<CLASS>
 
                 })
                 .collect(Collectors.toCollection(() -> pops));
+        updateOfPopulators.stream()
+                .map(updateGenerator -> new Populator(new ValueAssigner<CLASS, CombinedFieldValue<CLASS>>() {
+                    @Override
+                    public void assign(CLASS object, CombinedFieldValue<CLASS> updateOf) {
+                        updateOf.apply(object);
+                    }
+
+                    @Override
+                    public boolean accept(Class<? extends CombinedFieldValue<CLASS>> type) {
+                        return true;
+                    }
+
+                }, updateGenerator))
+                .collect(Collectors.toCollection(() -> pops));;
 
         setup(seq -> {
             CLASS o = constructorAccess.newInstance();
@@ -133,9 +149,18 @@ public class BeanGeneratorBuilder<CLASS> extends AbstractGeneratorBuilder<CLASS>
         return this;
     }
 
+    public BeanGeneratorBuilder<CLASS> with(AbstractGeneratorBuilder<CombinedFieldValue<CLASS>> generator) {
+        return with(generator.build());
+    }
+
     public <VALUE> BeanGeneratorBuilder<CLASS> with(String fieldName, AbstractGeneratorBuilder<VALUE> generator) {
         return with(fieldName, generator.build());
 
+    }
+
+    public BeanGeneratorBuilder<CLASS> with(Generator<CombinedFieldValue<CLASS>> generator) {
+        updateOfPopulators.add(generator);
+        return this;
     }
 
     public <VALUE> BeanGeneratorBuilder<CLASS> with(String fieldName, Generator<VALUE> generator) {

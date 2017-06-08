@@ -221,6 +221,51 @@ public class BeanGeneratorBuilderTest {
     }
 
     @Test
+    public void withUpdateOfGenerator() throws Exception {
+        final AbstractGeneratorBuilder<CombinedFieldValue<TestBean>> combinedGenerator =
+                aInteger()
+                        .uniform(0, 100)
+                        .convert(n -> new CombinedFieldValue<TestBean>() {
+                            @Override
+                            public void apply(TestBean testBean) {
+                                testBean.setId(n);
+                                testBean.setName(Integer.toString(n));
+                                testBean.setIdx3((long)n * 3);
+                            }
+                        });
+        final Generator<TestBean> generator = BaseBuilders.aBean(TestBean.class)
+                .with(combinedGenerator)
+                .build();
+
+        final TestBean bean = generator.generate(0);
+        Assert.assertEquals("bean 0 is not matching :" + bean, 52, bean.getId());
+        Assert.assertEquals("bean 0 is not matching :" + bean, "52", bean.getName());
+        Assert.assertEquals("bean 0 is not matching :" + bean, 52*3, bean.idx3);
+
+        final AbstractGeneratorBuilder<Tuple3<Long, String, Long>> fieldGenerator2 =
+                aInteger()
+                        .uniform(0, 100)
+                        .convert(new Function<Integer, Tuple3<Long, String, Long>>() {
+                            @Override
+                            public Tuple3<Long, String, Long> apply(Integer n) {
+                                return Tuples.of((long) n, Integer.toString(n), (long)n * 3);
+                            }
+                        });
+        final Generator<TestBean> generator2 = BaseBuilders.aBean(TestBean.class)
+                .with("id","name","idx3", fieldGenerator2)
+                .build();
+        Random rand = new Random();
+        for (int i = 0; i < 100; i++) {
+            long id = Math.abs(rand.nextLong());
+            final TestBean bean1 = generator.generate(id);
+            final TestBean bean2 = generator2.generate(id);
+            Assert.assertEquals("Idempotent test failed : id=" + id, bean1, bean2);
+        }
+
+
+    }
+
+    @Test
     public void aBitMoreComplex() throws Exception {
         Map<Character, Integer> characterCounts = new TreeMap<>();
         characterCounts.put('D', 100);
