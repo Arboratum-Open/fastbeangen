@@ -1,5 +1,10 @@
 package com.arboratum.beangen.util;
 
+import org.roaringbitmap.RoaringBitmap;
+
+import java.util.function.IntSupplier;
+import java.util.stream.IntStream;
+
 /**
  * The RandomSequence is designed to be fast.  It is not thread safe.
  *
@@ -143,5 +148,24 @@ public strictfp class RandomSequence {
 
     public long getRegister() {
         return this.register;
+    }
+
+
+    public IntStream randomWalk(final int fromInclusive, final int toExclusive) {
+        final RoaringBitmap set = new RoaringBitmap();
+        set.add(fromInclusive, toExclusive);
+
+        return IntStream.generate(new IntSupplier() {
+            int remaining = toExclusive - fromInclusive;
+            @Override
+            public int getAsInt() {
+                final int select = set.select(nextInt(remaining));
+
+                set.remove(select);
+                remaining--;
+                return select;
+            }
+        }).limit(toExclusive - fromInclusive);
+
     }
 }

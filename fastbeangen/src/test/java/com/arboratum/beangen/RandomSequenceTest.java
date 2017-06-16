@@ -6,6 +6,8 @@ import org.apache.commons.math3.stat.Frequency;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.util.stream.IntStream;
+
 /**
  * Created by gpicron on 08/08/2016.
  */
@@ -67,5 +69,14 @@ public strictfp class RandomSequenceTest {
         }
         System.out.println(freqs);
         System.out.println(stopwatch.stop());
+    }
+
+
+    @Test
+    public void testRandomWalk() {
+        final RandomSequence randomSequence = new RandomSequence(31L);
+        final IntStream intStream = randomSequence.randomWalk(10, 15);
+
+        Assert.assertArrayEquals(new int[]{11,13,10,12,14},intStream.toArray());
     }
 }

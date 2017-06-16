@@ -5,14 +5,19 @@ import com.arboratum.beangen.Generator;
 import com.arboratum.beangen.distribution.RegExpStringGenerator;
 import com.arboratum.beangen.util.RandomSequence;
 import com.arboratum.beangen.util.ToCharFunction;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.primitives.Chars;
 import org.apache.commons.math3.stat.Frequency;
 
 import java.nio.CharBuffer;
+import java.util.Arrays;
 import java.util.TreeSet;
 import java.util.function.Function;
 import java.util.function.ToIntFunction;
+import java.util.stream.Collectors;
+
+import static com.arboratum.beangen.util.SubSetSumProblemWithRepetition.findPossibleContatenationOfWords;
 
 /**
  * Created by gpicron on 09/08/2016.
@@ -87,6 +92,24 @@ public class CharSequenceGeneratorBuilder<VALUE> extends AbstractGeneratorBuilde
      */
     public CharSetGeneratorConfig withCharactersAnd(Frequency charsAndFrequency) {
         return new CharSetGeneratorConfig(charsAndFrequency);
+    }
+
+    /**
+     * Specify the words dictionary, the total expected length and the number of unique values.
+     *
+     * @return
+     */
+    public CharSequenceGeneratorBuilder<VALUE> withWords(ImmutableList<String> words, int length, int numberUnique, long valueSetGeneratorSeed) {
+        int[] lengths = words.stream().mapToInt(String::length).toArray();
+
+        char[][] solutions = findPossibleContatenationOfWords(lengths, length, new RandomSequence(valueSetGeneratorSeed))
+                .map(indexes -> Arrays.stream(indexes).mapToObj(i -> words.get(i)).collect(Collectors.joining(" ")).toCharArray())
+                .limitRate(numberUnique)
+                .toStream().toArray(char[][]::new);
+
+        buildFromCharArrayGenerator(randomSequence -> solutions[randomSequence.nextInt(solutions.length)]);
+
+        return this;
     }
 
     /**

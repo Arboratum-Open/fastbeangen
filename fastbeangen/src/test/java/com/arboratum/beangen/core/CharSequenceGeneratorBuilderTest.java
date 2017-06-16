@@ -2,6 +2,7 @@ package com.arboratum.beangen.core;
 
 import com.arboratum.beangen.Generator;
 import com.arboratum.beangen.util.RandomSequence;
+import com.google.common.collect.ImmutableList;
 import org.apache.commons.math3.stat.Frequency;
 import org.junit.Assert;
 import org.junit.Test;
@@ -92,4 +93,18 @@ public class CharSequenceGeneratorBuilderTest {
         Assert.assertEquals("bbbaaaabaa", s.generate(100));
 
     }
+
+    @Test
+    public void withWords() throws Exception {
+
+        final Generator<String> s = new CharSequenceGeneratorBuilder<>(String.class)
+                .withWords(ImmutableList.of("I", "am", "good", "bad", "worry", "not", "happy"), 8, 100, 0L)
+                .build();
+
+        Assert.assertEquals("am I not", s.generate(0));
+        Assert.assertEquals("am worry", s.generate(1));
+        Assert.assertEquals("I am I I", s.generate(100));
+
+    }
+
 }

@@ -3,10 +3,11 @@ dependencies {
     compile "com.esotericsoftware:reflectasm:1.11.3"
 
     compile group: 'dk.brics.automaton', name: 'automaton', version: '1.11-8'
-    compile group: 'com.google.guava', name: 'guava', version: '19.0'
+    compile group: 'com.google.guava', name: 'guava', version: '22.0'
     compile group: 'org.apache.commons', name: 'commons-math3', version: '3.6.1'
     compile 'joda-time:joda-time:2.9.4'
     compile 'io.projectreactor:reactor-core:3.0.4.RELEASE'
+    compile 'org.roaringbitmap:RoaringBitmap:0.6.44'
 
     testCompile 'io.projectreactor.addons:reactor-test:3.0.4.RELEASE'
 
