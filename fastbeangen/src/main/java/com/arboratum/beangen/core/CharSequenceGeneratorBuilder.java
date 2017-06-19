@@ -3,6 +3,8 @@ package com.arboratum.beangen.core;
 import com.arboratum.beangen.BaseBuilders;
 import com.arboratum.beangen.Generator;
 import com.arboratum.beangen.distribution.RegExpStringGenerator;
+import com.arboratum.beangen.util.IntSequence;
+import com.arboratum.beangen.util.MathUtils;
 import com.arboratum.beangen.util.RandomSequence;
 import com.arboratum.beangen.util.ToCharFunction;
 import com.google.common.collect.ImmutableList;
@@ -11,13 +13,9 @@ import com.google.common.primitives.Chars;
 import org.apache.commons.math3.stat.Frequency;
 
 import java.nio.CharBuffer;
-import java.util.Arrays;
 import java.util.TreeSet;
 import java.util.function.Function;
 import java.util.function.ToIntFunction;
-import java.util.stream.Collectors;
-
-import static com.arboratum.beangen.util.SubSetSumProblemWithRepetition.findPossibleContatenationOfWords;
 
 /**
  * Created by gpicron on 09/08/2016.
@@ -100,14 +98,34 @@ public class CharSequenceGeneratorBuilder<VALUE> extends AbstractGeneratorBuilde
      * @return
      */
     public CharSequenceGeneratorBuilder<VALUE> withWords(ImmutableList<String> words, int length, int numberUnique, long valueSetGeneratorSeed) {
-        int[] lengths = words.stream().mapToInt(String::length).toArray();
+        int[] lengths = words.stream().mapToInt(String::length).map(l -> l + 1).toArray();
 
-        char[][] solutions = findPossibleContatenationOfWords(lengths, length, new RandomSequence(valueSetGeneratorSeed))
-                .map(indexes -> Arrays.stream(indexes).mapToObj(i -> words.get(i)).collect(Collectors.joining(" ")).toCharArray())
-                .limitRate(numberUnique)
-                .toStream().toArray(char[][]::new);
+        final IntSequence[] intSequences = MathUtils.randomSubsetSum(lengths, length + 1, numberUnique, new RandomSequence(valueSetGeneratorSeed));
 
-        buildFromCharArrayGenerator(randomSequence -> solutions[randomSequence.nextInt(solutions.length)]);
+        buildFromCharArrayGenerator(randomSequence -> {
+            IntSequence s = intSequences[randomSequence.nextInt(intSequences.length)];
+            char[] builder = new char[length];
+            int pos = 0;
+            int i = 0;
+            for (int endi = s.length() - 1; i < endi; i++) {
+                final String word = words.get(s.intAt(i));
+                final int wordLength = word.length();
+
+                word.getChars(0, wordLength, builder, pos);
+
+                pos += wordLength;
+                builder[pos] = ' ';
+                pos++;
+            }
+
+            final String word = words.get(s.intAt(i));
+            final int wordLength = word.length();
+
+            word.getChars(0, wordLength, builder, pos);
+
+
+            return builder;
+        });
 
         return this;
     }

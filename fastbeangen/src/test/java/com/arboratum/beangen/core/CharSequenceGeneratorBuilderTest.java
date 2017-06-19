@@ -101,9 +101,9 @@ public class CharSequenceGeneratorBuilderTest {
                 .withWords(ImmutableList.of("I", "am", "good", "bad", "worry", "not", "happy"), 8, 100, 0L)
                 .build();
 
-        Assert.assertEquals("am I not", s.generate(0));
-        Assert.assertEquals("am worry", s.generate(1));
-        Assert.assertEquals("I am I I", s.generate(100));
+        Assert.assertEquals("I I good", s.generate(0));
+        Assert.assertEquals("am I I I", s.generate(1));
+        Assert.assertEquals("I bad am", s.generate(100));
 
     }
 
