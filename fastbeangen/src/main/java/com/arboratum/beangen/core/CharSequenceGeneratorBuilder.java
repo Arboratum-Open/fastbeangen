@@ -100,10 +100,13 @@ public class CharSequenceGeneratorBuilder<VALUE> extends AbstractGeneratorBuilde
     public CharSequenceGeneratorBuilder<VALUE> withWords(ImmutableList<String> words, int length, int numberUnique, long valueSetGeneratorSeed) {
         int[] lengths = words.stream().mapToInt(String::length).map(l -> l + 1).toArray();
 
-        final IntSequence[] intSequences = MathUtils.randomSubsetSum(lengths, length + 1, numberUnique, new RandomSequence(valueSetGeneratorSeed));
+        final Generator<IntSequence> generator = MathUtils.randomSubsetSum(lengths, length + 1, numberUnique, new RandomSequence(valueSetGeneratorSeed));
 
         buildFromCharArrayGenerator(randomSequence -> {
-            IntSequence s = intSequences[randomSequence.nextInt(intSequences.length)];
+            IntSequence s = generator.generate(randomSequence);
+
+            if (s == null) return new char[0];
+
             char[] builder = new char[length];
             int pos = 0;
             int i = 0;

@@ -78,10 +78,10 @@ public class CollectionGeneratorBuilder<VALUE, COL extends Collection<VALUE>> ex
      * @return
      */
     public CollectionGeneratorBuilder<VALUE, COL> of(Generator<? extends Number> sizeGenerator, Generator<VALUE> valueGenerator) {
-        if (fieldType.isAssignableFrom(HashSet.class)) {
+        if (fieldType.isAssignableFrom(LinkedHashSet.class)) {
             setup(randomSequence -> {
                 int size = sizeGenerator.apply(randomSequence).intValue();
-                Set r = new HashSet(size);
+                Set r = new LinkedHashSet(size);
 
                 for (int i = 0; r.size() < size; i++) {
                     r.add(valueGenerator.generate(randomSequence));

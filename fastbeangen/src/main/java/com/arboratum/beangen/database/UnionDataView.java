@@ -2,11 +2,13 @@ package com.arboratum.beangen.database;
 
 import com.arboratum.beangen.Generator;
 import com.arboratum.beangen.util.RandomSequence;
+import com.arboratum.beangen.util.ReflectionUtils;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.SynchronousSink;
 
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
@@ -20,11 +22,9 @@ class UnionDataView<T> implements DataView<T> {
 
     public UnionDataView(DataView<? extends T>... dataViews) {
         this.children = dataViews;
-        final Object[] types = Stream.of(children).map(DataView::getEntryType).distinct().toArray();
+        final List<Class<?>> types = ReflectionUtils.commonSuperClass(Stream.of(children).map(DataView::getEntryType).distinct().toArray(Class[]::new));
 
-        if (types.length > 1) throw new IllegalArgumentException("incompatible datasets");
-
-        this.type = (Class<T>) types[0];
+        this.type = (Class<T>) types.get(0);
     }
 
     @Override

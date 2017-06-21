@@ -1,15 +1,14 @@
 package com.arboratum.beangen.util;
 
 import com.arboratum.beangen.Generator;
-import com.google.common.base.Stopwatch;
-import org.roaringbitmap.RoaringBitmap;
+import com.google.common.collect.Streams;
+import reactor.util.function.Tuple2;
+import reactor.util.function.Tuples;
 
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.LinkedHashSet;
-import java.util.stream.IntStream;
+import java.util.*;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
-import static com.arboratum.beangen.BaseBuilders.aString;
 import static java.lang.Math.min;
 
 /**
@@ -17,6 +16,17 @@ import static java.lang.Math.min;
  */
 public class MathUtils {
 
+
+    public static final Collector<Tuple2<Integer, Long>, ?, TreeMap<Integer, BitSet>> TO_INVERTED_INDEX = Collectors.groupingBy(
+            Tuple2::getT1,
+            TreeMap::new,
+            Collector.of(
+                    BitSet::new,
+                    (bitSet, o) -> bitSet.set(o.getT2().intValue()),
+                    (bitSet, bitSet2) -> {
+                        bitSet.or(bitSet2);
+                        return bitSet;
+                    }));
 
     /**
      * Knuth shuffles (in place, modifies the array element order randomly)
@@ -44,81 +54,92 @@ public class MathUtils {
     }
 
 
-    public static IntSequence[] randomSubsetSum(int[] weights, int total, int numUniquewanted, final RandomSequence randomSequence) {
+    public static Generator<IntSequence> randomSubsetSum(int[] weights, int total, int numUniquewanted, final RandomSequence randomSequence) {
+        // index of weights by value
+        final TreeMap<Integer, BitSet> invertedIndexByWeightValue = Streams.mapWithIndex(Arrays.stream(weights), Tuples::of)
+                .collect(TO_INVERTED_INDEX);
+
         // dynamic programming indexing structure, weights sorted
         final int[][] index = new int[total+1][];
         index[0] = new int[0];
         int minWeight = Integer.MAX_VALUE;
         for (int subtotal = 1; subtotal < index.length; subtotal++) {
-            RoaringBitmap possibilities = new RoaringBitmap();
-            for (int i = 0; i < weights.length; i++) {
-                final int weight = weights[i];
+            BitSet possibilities = new BitSet();
+            for (Map.Entry<Integer, BitSet> e : invertedIndexByWeightValue.entrySet()) {
+                final int weight = e.getKey();
 
                 if (weight > subtotal) break; // stop searching, all the rest is too big
 
+                final BitSet correspondingElements = e.getValue();
+
                 if (weight == subtotal) {
-                    possibilities.add(i);
+                    possibilities.or(correspondingElements);
                 } else if (index[subtotal-weight].length != 0) {
-                    possibilities.add(i);
+                    possibilities.or(correspondingElements);
                 }
             }
-            final int cardinality = possibilities.getCardinality();
-            index[subtotal] = possibilities.toArray();
+            final int cardinality = possibilities.cardinality();
+            index[subtotal] = possibilities.stream().toArray();
             if (cardinality > 0) {
-                minWeight = min(minWeight, weights[possibilities.first()]);
+                minWeight = min(minWeight, weights[index[subtotal][0]]);
             }
         }
 
-        if (index[total].length == 0) return new IntSequence[0]; // no possible solution
-
-        LinkedHashSet<IntSequence> results = new LinkedHashSet<>(numUniquewanted);
-
-        final int[] buffer = new int[total / minWeight];
-
-        int found = 0;
-
-        for (int trial = 0; trial < (numUniquewanted * 2) && found < numUniquewanted; trial++) {
-            int i = 0;
-            int S = total;
-            for (; i < buffer.length && S > 0; i++) {
-                final int[] map = index[S];
-                final int weigthI = map[randomSequence.nextInt(map.length)];
-                buffer[i] = weigthI;
-                S -= weights[weigthI];
+        if (index[total].length == 0) return new Generator<IntSequence>(IntSequence.class) {
+            @Override
+            public IntSequence generate(RandomSequence register) {
+                return null;
             }
-
-            if (results.add(new IntSequence(buffer, 0, i))) found++;
-        }
-        return results.toArray(new IntSequence[results.size()]);
-    }
+        };
 
 
+        int finalMinWeight = minWeight;
+        return new Generator<IntSequence>(IntSequence.class) {
+            private ArrayList<IntSequence> cachedSequences = new ArrayList<>();
+            private HashSet<IntSequence> cachedSequencesSet = new HashSet<>();
+            private int cached = 0;
+            private boolean noMore= false;
 
-    public static void main(String[] args) {
-        final Generator<String> build = aString().withCharactersAnd("ABCDE").uniformLength(4, 12).build();
-        final String[] A = IntStream.range(0, 20).mapToObj(i -> build.generate(i)).toArray(String[]::new);
-        Arrays.sort(A, Comparator.comparingInt(String::length));
-        final int[] lengths = Arrays.stream(A).mapToInt(String::length).map(i -> i+1).toArray();
+            @Override
+            public IntSequence generate(RandomSequence register) {
+                if (noMore && cached == 0) return null;
 
-        for (int total = 55; total <= 55; total++) {
-            Stopwatch stopwatch = Stopwatch.createStarted();
-            final int distinct = 50000;
-            final IntSequence[] result = randomSubsetSum(lengths, total+1, distinct, new RandomSequence(31));
+                final int nth = register.nextInt((noMore) ? cached : numUniquewanted);
 
-            System.out.println(result.length);
-            System.out.println(stopwatch.stop());
-            stopwatch.reset(); stopwatch.start();
+                if (nth < cached) {
+                    return cachedSequences.get(nth);
+                } else {
+                    IntSequence e = null;
+                    final int[] buffer = new int[total / finalMinWeight];
+                    for (int trial = 0; trial < (numUniquewanted * 10) && cached <= nth; trial++) {
+                        int i = 0;
+                        int S = total;
+                        for (; i < buffer.length && S > 0; i++) {
+                            final int[] map = index[S];
+                            final int weigthI = map[randomSequence.nextInt(map.length)];
+                            buffer[i] = weigthI;
+                            S -= weights[weigthI];
+                        }
 
-            final IntSequence[] result2 = randomSubsetSum(lengths, total+1, distinct, new RandomSequence(1));
+                        e = new IntSequence(buffer, 0, i);
+                        if (cachedSequencesSet.add(e)) {
+                            cached++;
+                            cachedSequences.add(e);
+                        }
+                    }
+                    if (e == null) {
+                        noMore = true;
+                        if (cached > 0) {
+                            cachedSequences.get(nth % cached);
+                        } else {
+                            return null;
+                        }
 
-            System.out.println(result2.length);
-
-
-            System.out.println(stopwatch.stop());
-
-        }
-
-
+                    }
+                    return e;
+                }
+            }
+        };
     }
 
 

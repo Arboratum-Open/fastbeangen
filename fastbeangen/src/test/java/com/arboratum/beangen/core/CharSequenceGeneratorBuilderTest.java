@@ -98,11 +98,11 @@ public class CharSequenceGeneratorBuilderTest {
     public void withWords() throws Exception {
 
         final Generator<String> s = new CharSequenceGeneratorBuilder<>(String.class)
-                .withWords(ImmutableList.of("I", "am", "good", "bad", "worry", "not", "happy"), 8, 100, 0L)
+                .withWords(ImmutableList.of("I", "am", "good", "bad", "worry", "not", "happy"), 8, 10000, 0L)
                 .build();
 
-        Assert.assertEquals("I I good", s.generate(0));
-        Assert.assertEquals("am I I I", s.generate(1));
+        Assert.assertEquals("am I not", s.generate(0));
+        Assert.assertEquals("bad I am", s.generate(1));
         Assert.assertEquals("I bad am", s.generate(100));
 
     }
