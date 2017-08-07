@@ -9,8 +9,6 @@ import java.util.*;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
-import static java.lang.Math.min;
-
 /**
  * Created by gpicron on 17/06/2017.
  */
@@ -54,38 +52,9 @@ public class MathUtils {
     }
 
 
-    public static Generator<IntSequence> randomSubsetSum(int[] weights, int total, int numUniquewanted, final RandomSequence randomSequence) {
-        // index of weights by value
-        final TreeMap<Integer, BitSet> invertedIndexByWeightValue = Streams.mapWithIndex(Arrays.stream(weights), Tuples::of)
-                .collect(TO_INVERTED_INDEX);
+    public static Generator<IntSequence> randomSubSetSum(int total, int numUniquewanted, RandomSequence randomSequence, SubSetSumIndex subSetSumIndex) {
 
-        // dynamic programming indexing structure, weights sorted
-        final int[][] index = new int[total+1][];
-        index[0] = new int[0];
-        int minWeight = Integer.MAX_VALUE;
-        for (int subtotal = 1; subtotal < index.length; subtotal++) {
-            BitSet possibilities = new BitSet();
-            for (Map.Entry<Integer, BitSet> e : invertedIndexByWeightValue.entrySet()) {
-                final int weight = e.getKey();
-
-                if (weight > subtotal) break; // stop searching, all the rest is too big
-
-                final BitSet correspondingElements = e.getValue();
-
-                if (weight == subtotal) {
-                    possibilities.or(correspondingElements);
-                } else if (index[subtotal-weight].length != 0) {
-                    possibilities.or(correspondingElements);
-                }
-            }
-            final int cardinality = possibilities.cardinality();
-            index[subtotal] = possibilities.stream().toArray();
-            if (cardinality > 0) {
-                minWeight = min(minWeight, weights[index[subtotal][0]]);
-            }
-        }
-
-        if (index[total].length == 0) return new Generator<IntSequence>(IntSequence.class) {
+        if (subSetSumIndex.getIndex()[total].length == 0) return new Generator<IntSequence>(IntSequence.class) {
             @Override
             public IntSequence generate(RandomSequence register) {
                 return null;
@@ -93,12 +62,12 @@ public class MathUtils {
         };
 
 
-        int finalMinWeight = minWeight;
+
         return new Generator<IntSequence>(IntSequence.class) {
             private ArrayList<IntSequence> cachedSequences = new ArrayList<>();
             private HashSet<IntSequence> cachedSequencesSet = new HashSet<>();
             private int cached = 0;
-            private boolean noMore= false;
+            private boolean noMore = false;
 
             @Override
             public IntSequence generate(RandomSequence register) {
@@ -110,15 +79,15 @@ public class MathUtils {
                     return cachedSequences.get(nth);
                 } else {
                     IntSequence e = null;
-                    final int[] buffer = new int[total / finalMinWeight];
+                    final int[] buffer = new int[total];
                     for (int trial = 0; trial < (numUniquewanted * 10) && cached <= nth; trial++) {
                         int i = 0;
                         int S = total;
                         for (; i < buffer.length && S > 0; i++) {
-                            final int[] map = index[S];
+                            final int[] map = subSetSumIndex.getIndex()[S];
                             final int weigthI = map[randomSequence.nextInt(map.length)];
                             buffer[i] = weigthI;
-                            S -= weights[weigthI];
+                            S -= subSetSumIndex.getWeights()[weigthI];
                         }
 
                         e = new IntSequence(buffer, 0, i);
@@ -143,4 +112,56 @@ public class MathUtils {
     }
 
 
+    public static class SubSetSumIndex {
+        private int[] weights;
+        private int total = 0;
+        private int[][] index;
+
+        public SubSetSumIndex(int[] weights) {
+            this.weights = weights;
+        }
+
+        public int[][] getIndex() {
+            return index;
+        }
+
+        public SubSetSumIndex rebuild(int total) {
+            if (total <= this.total) return this;
+            // index of weights by value
+            final TreeMap<Integer, BitSet> invertedIndexByWeightValue = Streams.mapWithIndex(Arrays.stream(weights), Tuples::of)
+                    .collect(TO_INVERTED_INDEX);
+
+            // dynamic programming indexing structure, weights sorted
+            int[][] index = new int[total + 1][];
+            index[0] = new int[0];
+
+            for (int subtotal = 1; subtotal < index.length; subtotal++) {
+                BitSet possibilities = new BitSet();
+                for (Map.Entry<Integer, BitSet> e : invertedIndexByWeightValue.entrySet()) {
+                    final int weight = e.getKey();
+
+                    if (weight > subtotal) break; // stop searching, all the rest is too big
+
+                    final BitSet correspondingElements = e.getValue();
+
+                    if (weight == subtotal) {
+                        possibilities.or(correspondingElements);
+                    } else if (index[subtotal-weight].length != 0) {
+                        possibilities.or(correspondingElements);
+                    }
+                }
+                final int cardinality = possibilities.cardinality();
+                index[subtotal] = possibilities.stream().toArray();
+            }
+
+            this.index = index;
+            this.total = total;
+
+            return this;
+        }
+
+        public int[] getWeights() {
+            return weights;
+        }
+    }
 }

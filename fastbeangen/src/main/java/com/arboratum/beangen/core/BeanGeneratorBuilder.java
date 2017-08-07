@@ -1,7 +1,6 @@
 package com.arboratum.beangen.core;
 
 import com.arboratum.beangen.Generator;
-import com.arboratum.beangen.database.UpdateOf;
 import com.arboratum.beangen.util.Populator;
 import com.arboratum.beangen.util.RandomSequence;
 import com.arboratum.beangen.util.ValueAssigner;
@@ -259,7 +258,7 @@ public class BeanGeneratorBuilder<CLASS> extends AbstractGeneratorBuilder<CLASS>
             @Override
             public boolean accept(Class<? extends FIELD> type) {
                 final Class parameterClass = access.getParameterTypes()[methodIndex][0];
-                if (type.isAssignableFrom(parameterClass)) {
+                if (parameterClass.isAssignableFrom(type)) {
                     return true;
                 } else if (parameterClass.isPrimitive() && parameterClass == Primitives.unwrap(type)) {
                     return true;

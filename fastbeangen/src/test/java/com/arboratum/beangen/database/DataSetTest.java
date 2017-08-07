@@ -106,7 +106,7 @@ public class DataSetTest {
                 return 1;
             }
         };
-        DataSet<Integer> pojo = new DataSet<>(generator, new byte[]{1, -3, 2}, 2, updateGenerator, (previousValue, randomSequence) -> (UpdateOf<Integer>) integer -> integer + 1, null, null, Schedulers.single());
+        DataSet<Integer> pojo = new DataSet<>(generator, new byte[]{1, -3, 2}, 2, updateGenerator, (previousValue, randomSequence) -> (UpdateOf<Integer>) integer -> integer + 1, null, null, Schedulers.single(), 0);
 
 
 
@@ -214,8 +214,8 @@ public class DataSetTest {
                 updateGenerator,
                 null,
                 null,
-                Schedulers.immediate()
-        );
+                Schedulers.immediate(),
+                0);
 
         // check all entries
         for (int i = 0; i < 4; i++) {

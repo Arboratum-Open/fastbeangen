@@ -17,6 +17,13 @@ public class Database {
         dataSetBuilders.put(name, dataset);
     }
 
+    public <T> DataView createUnionView(String name, Class<T> type, String... names) {
+        final DataView[] dataViews = Stream.of(names).map(this::getDataView).toArray(DataView[]::new);
+        final UnionDataView<T> tUnionView = new UnionDataView<>(type, dataViews);
+        dataSets.put(name, tUnionView);
+        return tUnionView;
+    }
+
     public <T> DataView createUnionView(String name, String... names) {
         final DataView[] dataViews = Stream.of(names).map(this::getDataView).toArray(DataView[]::new);
         final UnionDataView<T> tUnionView = new UnionDataView<>(dataViews);

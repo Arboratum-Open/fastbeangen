@@ -111,11 +111,7 @@ public class ExtraTest {
                 .from(previous).build();
         
         double percentDeleted = previous.getCumPct(0);
-        System.out.println("Percent deleted : " + percentDeleted);
-        System.out.println("Percent active : " + (1d - percentDeleted));
         final int dbVectorSize = (int) (100000000 / (1d - percentDeleted));
-        System.out.println("Db vector size : " + dbVectorSize);
-
 
         byte[] dbVector = new byte[dbVectorSize];
         for (int i = 0; i < dbVectorSize; i++) {

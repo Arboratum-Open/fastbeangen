@@ -20,6 +20,11 @@ class UnionDataView<T> implements DataView<T> {
     private final DataView[] children;
     private final Class<T> type;
 
+    public UnionDataView(Class<T> type, DataView<? extends T>... dataViews) {
+        this.children = dataViews;
+        this.type = type;
+    }
+
     public UnionDataView(DataView<? extends T>... dataViews) {
         this.children = dataViews;
         final List<Class<?>> types = ReflectionUtils.commonSuperClass(Stream.of(children).map(DataView::getEntryType).distinct().toArray(Class[]::new));
@@ -51,7 +56,7 @@ class UnionDataView<T> implements DataView<T> {
             final int size = child.getSize();
             if (size > 0) {
                 acc += size;
-                ranges[j] = acc;
+                ranges[j] = acc - 1;
                 nonEmptySets[j] = i;
                 j++;
             }
@@ -59,7 +64,8 @@ class UnionDataView<T> implements DataView<T> {
         if (j == 0) return -1;
 
 
-        int index = Arrays.binarySearch(ranges, 0, j, r.nextLong(acc));
+        long rnd = r.nextLong(acc);
+        int index = Arrays.binarySearch(ranges, 0, j, rnd);
         if (index < 0) {
             index = -index - 1;
         }

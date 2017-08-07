@@ -7,6 +7,8 @@ import com.arboratum.beangen.util.IntSequence;
 import com.arboratum.beangen.util.MathUtils;
 import com.arboratum.beangen.util.RandomSequence;
 import com.arboratum.beangen.util.ToCharFunction;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.primitives.Chars;
@@ -14,6 +16,7 @@ import org.apache.commons.math3.stat.Frequency;
 
 import java.nio.CharBuffer;
 import java.util.TreeSet;
+import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 import java.util.function.ToIntFunction;
 
@@ -92,15 +95,28 @@ public class CharSequenceGeneratorBuilder<VALUE> extends AbstractGeneratorBuilde
         return new CharSetGeneratorConfig(charsAndFrequency);
     }
 
+    private static Cache<ImmutableList<String>, MathUtils.SubSetSumIndex> sumIndexCache = CacheBuilder.newBuilder().maximumSize(100).build();
+
     /**
      * Specify the words dictionary, the total expected length and the number of unique values.
      *
      * @return
      */
     public CharSequenceGeneratorBuilder<VALUE> withWords(ImmutableList<String> words, int length, int numberUnique, long valueSetGeneratorSeed) {
-        int[] lengths = words.stream().mapToInt(String::length).map(l -> l + 1).toArray();
 
-        final Generator<IntSequence> generator = MathUtils.randomSubsetSum(lengths, length + 1, numberUnique, new RandomSequence(valueSetGeneratorSeed));
+        final MathUtils.SubSetSumIndex subSetSumIndex;
+        try {
+            subSetSumIndex = sumIndexCache.get(words, () -> {
+                int[] lengths = words.stream().mapToInt(String::length).map(l -> l + 1).toArray();
+                return new MathUtils.SubSetSumIndex(lengths);
+            });
+        } catch (ExecutionException e) {
+            throw new RuntimeException("bug", e);
+        }
+
+        subSetSumIndex.rebuild(length + 1);
+
+        final Generator<IntSequence> generator = MathUtils.randomSubSetSum(length + 1, numberUnique, new RandomSequence(valueSetGeneratorSeed), subSetSumIndex);
 
         buildFromCharArrayGenerator(randomSequence -> {
             IntSequence s = generator.generate(randomSequence);

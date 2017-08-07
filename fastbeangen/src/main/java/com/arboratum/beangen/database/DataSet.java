@@ -21,6 +21,7 @@ public class DataSet<ENTRY> implements DataView<ENTRY> {
     private final CreateTrigger<ENTRY>[] createTriggers;
     private final UpdateTrigger<ENTRY>[] updateTriggers;
     private final Scheduler scheduler;
+    private final int offset;
 
 
     public static <T> DataSetBuilder<T> builder() {
@@ -38,7 +39,7 @@ public class DataSet<ENTRY> implements DataView<ENTRY> {
         int elementIndex;
         do {
             if (size == 0) return null;
-            elementIndex = r.nextInt(lastIndex);
+            elementIndex = r.nextInt(lastIndex + 1);
             version = versions[elementIndex];
         } while (version < 0);
 
@@ -92,7 +93,7 @@ public class DataSet<ENTRY> implements DataView<ENTRY> {
             final CreateTrigger<ENTRY>[] createTriggers = DataSet.this.createTriggers;
 
             return Flux.create(entryFluxSink -> {
-                final ENTRY value = entryGenerator.generate(elementIndex);
+                final ENTRY value = entryGenerator.generate(elementIndex+offset);
                 if (createTriggers != null) {
                     for (CreateTrigger<ENTRY> trigger : createTriggers) {
                         trigger.apply(elementIndex, value);
@@ -101,7 +102,7 @@ public class DataSet<ENTRY> implements DataView<ENTRY> {
 
                 entryFluxSink.next(value);
                 if (v > 1) {
-                    final RandomSequence seq = new RandomSequence(elementIndex);
+                    final RandomSequence seq = new RandomSequence(elementIndex+offset);
 
                     for (byte i = 2; i <= v; i++) {
                         final UpdateOf<ENTRY> update = updateGenerator.generate(value, seq);
@@ -198,7 +199,7 @@ public class DataSet<ENTRY> implements DataView<ENTRY> {
 
     private boolean feedBuilt =  false;
 
-    DataSet(Generator<OpCode> operationGenerator, byte[] versions, int lastIndex, Generator<ENTRY> entryGenerator, UpdateGenerator<ENTRY> updateGenerator, CreateTrigger<ENTRY>[] createTriggers, UpdateTrigger<ENTRY>[] updateTriggers, Scheduler scheduler) {
+    DataSet(Generator<OpCode> operationGenerator, byte[] versions, int lastIndex, Generator<ENTRY> entryGenerator, UpdateGenerator<ENTRY> updateGenerator, CreateTrigger<ENTRY>[] createTriggers, UpdateTrigger<ENTRY>[] updateTriggers, Scheduler scheduler, int offset) {
         this.entryGenerator = entryGenerator;
         this.versions = versions;
         this.lastIndex = lastIndex;
@@ -208,6 +209,7 @@ public class DataSet<ENTRY> implements DataView<ENTRY> {
         this.createTriggers = createTriggers;
         this.updateTriggers = updateTriggers;
         this.scheduler = scheduler;
+        this.offset = offset;
     }
 
     private int countActive(byte[] versions) {
@@ -219,7 +221,7 @@ public class DataSet<ENTRY> implements DataView<ENTRY> {
     }
 
     DataSet(Generator<OpCode> operationGenerator) {
-        this(operationGenerator, new byte[0], -1, null, null, null, null, Schedulers.single());
+        this(operationGenerator, new byte[0], -1, null, null, null, null, Schedulers.single(), 0);
     }
 
 

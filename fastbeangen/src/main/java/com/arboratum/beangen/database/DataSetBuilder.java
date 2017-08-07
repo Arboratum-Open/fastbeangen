@@ -19,6 +19,7 @@ import java.util.Map;
 public strictfp class DataSetBuilder<T> {
 
 
+    private int offset;
     private int numInitialEntries;
     private Generator<DataView.OpCode> initOpGenerator;
     private Generator<DataView.OpCode> updateOpGenerator;
@@ -27,6 +28,11 @@ public strictfp class DataSetBuilder<T> {
     private List<DataSet.CreateTrigger<T>> createTriggers = new ArrayList<>();
     private List<DataSet.UpdateTrigger<T>> updateTriggers = new ArrayList<>();
     private Scheduler scheduler = Schedulers.single();
+
+    public DataSetBuilder<T> offset(int skip) {
+        this.offset = skip;
+        return this;
+    }
 
     public DataSetBuilder<T> of(int numEntries) {
         this.numInitialEntries = numEntries;
@@ -102,9 +108,6 @@ public strictfp class DataSetBuilder<T> {
         final Generator<Long> generator = BaseBuilders.enumerated(Long.class).from(previous).build();
 
         double percentDeleted = previous.getCumPct(0);
-        System.out.println("Percent deleted : " + percentDeleted);
-        System.out.println("Percent active : " + (1d - percentDeleted));
-        System.out.println("Target active : " + numInitialEntries);
 
         int required = numInitialEntries;
 
@@ -112,14 +115,14 @@ public strictfp class DataSetBuilder<T> {
         int j = 0;
         for (; required > 0; j++) {
             versions = Bytes.ensureCapacity(versions, j+1, 1024);
-            final byte v = generator.generate(j).byteValue();
+            final byte v = generator.generate(j+offset).byteValue();
             versions[j] = v;
             if (v > 0) required--;
         }
 
         return new DataSet<T>(updateOpGenerator, versions, j-1, entryGenerator, updateGenerator,
                 (createTriggers.size() == 0) ? null : createTriggers.toArray(new DataSet.CreateTrigger[0]),
-                (updateTriggers.size() == 0) ? null : updateTriggers.toArray(new DataSet.UpdateTrigger[0]), scheduler);
+                (updateTriggers.size() == 0) ? null : updateTriggers.toArray(new DataSet.UpdateTrigger[0]), scheduler, offset);
     }
 
 

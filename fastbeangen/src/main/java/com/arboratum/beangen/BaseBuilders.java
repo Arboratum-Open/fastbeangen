@@ -3,10 +3,7 @@ package com.arboratum.beangen;
 import com.arboratum.beangen.core.*;
 import com.arboratum.beangen.extended.IdentityGeneratorBuilder;
 
-import java.util.Calendar;
-import java.util.Date;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Created by gpicron on 09/08/2016.

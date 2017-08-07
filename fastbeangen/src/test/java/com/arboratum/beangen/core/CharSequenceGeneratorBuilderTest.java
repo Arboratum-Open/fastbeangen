@@ -97,14 +97,30 @@ public class CharSequenceGeneratorBuilderTest {
     @Test
     public void withWords() throws Exception {
 
-        final Generator<String> s = new CharSequenceGeneratorBuilder<>(String.class)
-                .withWords(ImmutableList.of("I", "am", "good", "bad", "worry", "not", "happy"), 8, 10000, 0L)
+        final ImmutableList<String> words = ImmutableList.of("I", "am", "good", "bad", "worry", "not", "happy");
+        Generator<String> s = new CharSequenceGeneratorBuilder<>(String.class)
+                .withWords(words, 8, 10000, 0L)
                 .build();
 
-        Assert.assertEquals("am I not", s.generate(0));
-        Assert.assertEquals("bad I am", s.generate(1));
-        Assert.assertEquals("I bad am", s.generate(100));
+        Assert.assertEquals("good not", s.generate(0));
+        Assert.assertEquals("not I am", s.generate(1));
+        Assert.assertEquals("worry am", s.generate(100));
 
+        s = new CharSequenceGeneratorBuilder<>(String.class)
+                .withWords(words, 8, 10000, 0L)
+                .build();
+
+        Assert.assertEquals("good not", s.generate(0));
+        Assert.assertEquals("not I am", s.generate(1));
+        Assert.assertEquals("worry am", s.generate(100));
+
+        s = new CharSequenceGeneratorBuilder<>(String.class)
+                .withWords(words, 9, 10000, 0L)
+                .build();
+
+        Assert.assertEquals("bad I I I", s.generate(0));
+        Assert.assertEquals("bad happy", s.generate(1));
+        Assert.assertEquals("not worry", s.generate(100));
     }
 
 }
