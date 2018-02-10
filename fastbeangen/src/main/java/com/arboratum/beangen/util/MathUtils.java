@@ -2,10 +2,14 @@ package com.arboratum.beangen.util;
 
 import com.arboratum.beangen.Generator;
 import com.google.common.collect.Streams;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.SynchronousSink;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
+import java.math.BigInteger;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
@@ -52,6 +56,8 @@ public class MathUtils {
     }
 
 
+
+
     public static Generator<IntSequence> randomSubSetSum(int total, int numUniquewanted, RandomSequence randomSequence, SubSetSumIndex subSetSumIndex) {
 
         if (subSetSumIndex.getIndex()[total].length == 0) return new Generator<IntSequence>(IntSequence.class) {
@@ -66,8 +72,8 @@ public class MathUtils {
         return new Generator<IntSequence>(IntSequence.class) {
             private ArrayList<IntSequence> cachedSequences = new ArrayList<>();
             private HashSet<IntSequence> cachedSequencesSet = new HashSet<>();
-            private int cached = 0;
-            private boolean noMore = false;
+            private volatile int cached = 0;
+            private volatile boolean noMore = false;
 
             @Override
             public IntSequence generate(RandomSequence register) {
@@ -80,32 +86,44 @@ public class MathUtils {
                 } else {
                     IntSequence e = null;
                     final int[] buffer = new int[total];
-                    for (int trial = 0; trial < (numUniquewanted * 10) && cached <= nth; trial++) {
-                        int i = 0;
-                        int S = total;
-                        for (; i < buffer.length && S > 0; i++) {
-                            final int[] map = subSetSumIndex.getIndex()[S];
-                            final int weigthI = map[randomSequence.nextInt(map.length)];
-                            buffer[i] = weigthI;
-                            S -= subSetSumIndex.getWeights()[weigthI];
-                        }
-
-                        e = new IntSequence(buffer, 0, i);
-                        if (cachedSequencesSet.add(e)) {
-                            cached++;
-                            cachedSequences.add(e);
-                        }
-                    }
-                    if (e == null) {
-                        noMore = true;
-                        if (cached > 0) {
-                            cachedSequences.get(nth % cached);
+                    synchronized (cachedSequences) {
+                        if (nth < cached) { // was increased in the meantime
+                            return cachedSequences.get(nth);
                         } else {
-                            return null;
-                        }
+                            for (int trial = 0; trial < (numUniquewanted * 10) && cached <= nth; trial++) {
+                                int i = 0;
+                                int S = total;
+                                for (; i < buffer.length && S > 0; i++) {
+                                    final int[] map = subSetSumIndex.getIndex()[S];
+                                    final int weigthI = map[randomSequence.nextInt(map.length)];
+                                    buffer[i] = weigthI;
+                                    S -= subSetSumIndex.getWeights()[weigthI];
+                                }
 
+                                e = new IntSequence(buffer, 0, i);
+                                if (cachedSequencesSet.add(e)) {
+                                    cachedSequences.add(e);
+                                    cached++;
+                                }
+                            }
+
+                            if (e == null) {
+                                noMore = true;
+                                cachedSequencesSet = null;
+                                if (cached > 0) {
+                                    return cachedSequences.get(nth % cached);
+                                } else {
+                                    return null;
+                                }
+                            } else {
+                                if (cached == numUniquewanted) {
+                                    noMore = true;
+                                    cachedSequencesSet = null;
+                                }
+                                return e;
+                            }
+                        }
                     }
-                    return e;
                 }
             }
         };
@@ -116,6 +134,7 @@ public class MathUtils {
         private int[] weights;
         private int total = 0;
         private int[][] index;
+        private BigInteger[] counts;
 
         public SubSetSumIndex(int[] weights) {
             this.weights = weights;
@@ -134,9 +153,12 @@ public class MathUtils {
             // dynamic programming indexing structure, weights sorted
             int[][] index = new int[total + 1][];
             index[0] = new int[0];
+            BigInteger[] counts = new BigInteger[total+1];
+            counts[0] = BigInteger.ZERO;
 
             for (int subtotal = 1; subtotal < index.length; subtotal++) {
                 BitSet possibilities = new BitSet();
+                BigInteger count = BigInteger.ZERO;
                 for (Map.Entry<Integer, BitSet> e : invertedIndexByWeightValue.entrySet()) {
                     final int weight = e.getKey();
 
@@ -146,16 +168,24 @@ public class MathUtils {
 
                     if (weight == subtotal) {
                         possibilities.or(correspondingElements);
-                    } else if (index[subtotal-weight].length != 0) {
-                        possibilities.or(correspondingElements);
+                        count = count.add(BigInteger.valueOf(correspondingElements.cardinality()));
+                    } else {
+                        if (index[subtotal - weight].length != 0) {
+                            possibilities.or(correspondingElements);
+                        }
+                        BigInteger subcount = counts[subtotal - weight];
+                        if (!subcount.equals(BigInteger.ZERO)) {
+                            count = count.add(BigInteger.valueOf(correspondingElements.cardinality()).multiply(subcount));
+                        }
                     }
                 }
-                final int cardinality = possibilities.cardinality();
+                counts[subtotal] = count;
                 index[subtotal] = possibilities.stream().toArray();
             }
 
             this.index = index;
             this.total = total;
+            this.counts = counts;
 
             return this;
         }
@@ -163,5 +193,61 @@ public class MathUtils {
         public int[] getWeights() {
             return weights;
         }
+
+        public BigInteger[] getCounts() {
+            return counts;
+        }
+
+        public Flux<IntSequence> allCombinations(int sum) {
+            if (sum == 0) {
+                return Flux.empty();
+            } else {
+                final int[] localWeights = this.weights;
+                int[][] localIndex = this.index;
+                return allCombRecursive(sum, localWeights, localIndex);
+            }
+        }
+
+        private Flux<IntSequence> allCombRecursive(int sum, int[] localWeights, int[][] localIndex) {
+            int[] localIndexAtSum = localIndex[sum];
+
+            return Flux.range(0, localIndexAtSum.length)
+                    .map(i -> new IntSequence(new int[] {localIndexAtSum[i]}, true))
+                    .concatMap(left -> {
+                                int weight = localWeights[left.intAt(0)];
+                                if (weight == sum) {
+                                    return Flux.just(left);
+                                } else {
+                                    return allCombRecursive(sum - weight, localWeights, localIndex).map(right -> left.concat(right));
+                                }
+                            }
+                    );
+
+        }
+
+        public Flux<IntSequence> randomSolutions(RandomSequence randomSequence, int sum) {
+            final int[][] index = this.getIndex();
+            final int[] weights = this.getWeights();
+
+            RandomSequence localSequence = new RandomSequence(randomSequence.nextLong(Long.MAX_VALUE));
+
+            return Flux.generate(new Consumer<SynchronousSink<IntSequence>>() {
+                final int[] buffer = new int[sum];
+                @Override
+                public void accept(SynchronousSink<IntSequence> synchronousSink) {
+                    int i = 0;
+                    int S = sum;
+                    for (; i < buffer.length && S > 0; i++) {
+                        final int[] map = index[S];
+                        final int weigthI = map[localSequence.nextInt(map.length)];
+                        buffer[i] = weigthI;
+                        S -= weights[weigthI];
+                    }
+                    synchronousSink.next(new IntSequence(buffer, 0, i));
+                }
+            });
+
+        }
+
     }
 }

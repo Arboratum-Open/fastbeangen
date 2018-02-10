@@ -11,12 +11,20 @@ import java.util.stream.StreamSupport;
 public class IntSequence {
     private final int[] data;
 
+    public IntSequence(int[] data, boolean nocopy) {
+        if (nocopy) {
+            this.data = data;
+        } else {
+            this.data = Arrays.copyOf(data, data.length);
+        }
+    }
+
     public IntSequence(int[] data, int offset, int count) {
         this.data = Arrays.copyOfRange(data, offset, count);
     }
 
     public IntSequence(int[] data) {
-        this.data = Arrays.copyOf(data, data.length);
+        this(data, false);
     }
 
     /**
@@ -72,6 +80,18 @@ public class IntSequence {
     public IntSequence subSequence(int start, int end) {
         return new IntSequence(this.data, start, end - start);
     };
+
+    public IntSequence concat(IntSequence other) {
+        int otherLen = other.length();
+        if (otherLen == 0) {
+            return this;
+        }
+        int len = data.length;
+        int buf[] = Arrays.copyOf(data, len + otherLen);
+        System.arraycopy(other.data, 0, buf, len, otherLen);
+
+        return new IntSequence(buf, true);
+    }
 
     /**
      * Returns a string containing the characters in this sequence in the same

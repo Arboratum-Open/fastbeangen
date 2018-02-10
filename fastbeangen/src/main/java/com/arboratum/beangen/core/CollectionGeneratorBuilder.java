@@ -88,6 +88,7 @@ public class CollectionGeneratorBuilder<VALUE, COL extends Collection<VALUE>> ex
 
                     if (i > 10 * size) {
                         log.warning("Seems we cannot generate a value for the set that doesn't exist yet. Stop trying.");
+                        break;
                     }
                 }
                 return (COL)r;

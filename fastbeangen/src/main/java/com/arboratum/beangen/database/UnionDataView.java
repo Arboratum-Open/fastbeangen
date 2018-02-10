@@ -86,7 +86,7 @@ class UnionDataView<T> implements DataView<T> {
 
     @Override
     public Flux<DataSet<T>.Entry> traverseDataSet(boolean includeDeleted) {
-        return Flux.fromArray(children).flatMap(dataView -> dataView.traverseDataSet(includeDeleted));
+        return Flux.fromArray(children).concatMap(dataView -> dataView.traverseDataSet(includeDeleted));
     }
 
     @Override

@@ -9,7 +9,10 @@ import reactor.core.publisher.Mono;
 import reactor.core.publisher.TopicProcessor;
 import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
+import reactor.util.function.Tuple2;
+import reactor.util.function.Tuples;
 
+import java.util.Objects;
 import java.util.function.Function;
 
 /**
@@ -63,6 +66,35 @@ public class DataSet<ENTRY> implements DataView<ENTRY> {
     // marker op when not able to generate a valid op
     private final Operation NON_GENERATABLE_FOR_ID = new Operation( -1, null);
 
+
+    public static final class EntryRef<ENTRY> {
+        private final int elementIndex;
+        private final DataSet<ENTRY> dataSet;
+
+        private EntryRef(int elementIndex, DataSet dataSet) {
+            this.elementIndex = elementIndex;
+            this.dataSet = dataSet;
+        }
+
+        public DataSet<ENTRY>.Entry getCurrent() {
+            return dataSet.get(elementIndex);
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            EntryRef<?> entryRef = (EntryRef<?>) o;
+            return elementIndex == entryRef.elementIndex &&
+                    Objects.equals(dataSet, entryRef.dataSet);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(elementIndex, dataSet);
+        }
+    }
+
     public class Entry {
         private final int elementIndex;
         private final byte elementVersion;
@@ -80,13 +112,18 @@ public class DataSet<ENTRY> implements DataView<ENTRY> {
 
         @Override
         public String toString() {
-            return "DataSetEntry{" +
+            return "Entry{" +
                     "elementIndex=" + elementIndex +
                     ", elementVersion=" + elementVersion +
                     '}';
         }
 
         public Flux<ENTRY> allVersions() {
+           return allUpdatesAndEntry().map(Tuple2::getT2);
+        }
+
+
+        public Flux<Tuple2<UpdateOf<ENTRY>, ENTRY>> allUpdatesAndEntry() {
             int v = Math.abs(elementVersion);
             final int elementIndex = this.elementIndex;
             final Generator<ENTRY> entryGenerator = DataSet.this.entryGenerator;
@@ -100,7 +137,7 @@ public class DataSet<ENTRY> implements DataView<ENTRY> {
                     }
                 }
 
-                entryFluxSink.next(value);
+                entryFluxSink.next(Tuples.of(null, value));
                 if (v > 1) {
                     final RandomSequence seq = new RandomSequence(elementIndex+offset);
 
@@ -115,7 +152,7 @@ public class DataSet<ENTRY> implements DataView<ENTRY> {
 
                         update.apply(value);
 
-                        entryFluxSink.next(value);
+                        entryFluxSink.next(Tuples.of(update, value));
                     }
                 }
 
@@ -127,6 +164,9 @@ public class DataSet<ENTRY> implements DataView<ENTRY> {
 
         public Mono<ENTRY> lastVersion() {
             return allVersions().last();
+        }
+        public Mono<UpdateOf<ENTRY>> lastUpdate() {
+            return allUpdatesAndEntry().filter(t -> t.getT1() != null).map(Tuple2::getT1).last();
         }
 
         public boolean isLive() {
@@ -144,7 +184,15 @@ public class DataSet<ENTRY> implements DataView<ENTRY> {
             return elementVersion;
         }
 
+        public EntryRef getRef() {
+            return new EntryRef(elementIndex, DataSet.this);
+        }
+
+        public DataSet getDataSet() {
+            return DataSet.this;
+        }
     }
+
 
     public class Operation {
         private final int sequenceId;
@@ -185,6 +233,14 @@ public class DataSet<ENTRY> implements DataView<ENTRY> {
             } else {
                 throw new IllegalStateException("The operation was acked 2 times :" + this);
             }
+        }
+
+        @Override
+        public String toString() {
+            return "Operation{" +
+                    "sequenceId=" + sequenceId +
+                    ", entry=" + entry +
+                    '}';
         }
     }
 
