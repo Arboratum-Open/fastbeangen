@@ -35,10 +35,8 @@ public class AtomicBitSet {
 
 	private AtomicLongArray getBitsHolderFromMap(int bitIndex) {
 		int wordPos = getWordPos(bitIndex);
-		if (!bitsHolderMap.containsKey(wordPos))
-			bitsHolderMap.putIfAbsent(wordPos, new AtomicLongArray(
-					ATOMIC_LONG_ARRAY_SIZE));
-		return bitsHolderMap.get(wordPos);
+
+		return bitsHolderMap.computeIfAbsent(wordPos, i -> new AtomicLongArray(ATOMIC_LONG_ARRAY_SIZE));
 	}
 
 	/**
@@ -115,6 +113,18 @@ public class AtomicBitSet {
 						result.add(j);
 					value = value >> 1;
 				}
+			}
+		}
+		return result;
+	}
+	public int countSet() {
+		int result = 0;
+		for (Map.Entry<Integer, AtomicLongArray> bitsHolderEntry : bitsHolderMap.entrySet()) {
+			AtomicLongArray bitsHolder = bitsHolderEntry.getValue();
+
+			for (int i = 0, end = bitsHolder.length(); i < end; i++) {
+				long value = bitsHolder.get(i);
+				result += Long.bitCount(value);
 			}
 		}
 		return result;

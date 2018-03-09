@@ -2,10 +2,7 @@ package com.arboratum.beangen.example1;
 
 import com.arboratum.beangen.Generator;
 import com.arboratum.beangen.core.BeanGeneratorBuilder;
-import com.arboratum.beangen.database.DataSet;
-import com.arboratum.beangen.database.DataView;
-import com.arboratum.beangen.database.Database;
-import com.arboratum.beangen.database.UpdateOf;
+import com.arboratum.beangen.database.*;
 import com.arboratum.beangen.example1.model.*;
 import com.arboratum.beangen.util.RandomSequence;
 import com.beust.jcommander.Parameter;
@@ -79,17 +76,17 @@ public class ComplexDatabase {
 
         // the triggers is used to memoize the generated relations
         final DataSet.CreateTrigger<Relation> personCreateTrigger = new DataSet.CreateTrigger<Relation>() {
-            private Map<Integer, DataSet.Entry[]> memory = new HashMap<>(); // to support large maps, prefer off-heap Chronicle Map
+            private Map<Integer, Entry[]> memory = new HashMap<>(); // to support large maps, prefer off-heap Chronicle Map
 
             @Override
             public void apply(int index, Relation value) {
                 final DataView<Person> persons = database.getDataView("persons");
 
-                DataSet.Entry[] refs = memory.get(index);
+                Entry[] refs = memory.get(index);
                 if (refs == null) {
                     final RandomSequence r = new RandomSequence(index);
                     final int numRel = r.nextInt(2) + 2;
-                    refs = new DataSet.Entry[numRel];
+                    refs = new Entry[numRel];
 
                     for (int i = 0; i < numRel; i++) {
                         refs[i] = persons.selectOne(r);
@@ -97,7 +94,7 @@ public class ComplexDatabase {
                     memory.put(index, refs);
                 }
                 final ArrayList<Person> people = new ArrayList<>(refs.length);
-                for (DataSet.Entry ref : refs) {
+                for (Entry ref : refs) {
                     people.add((Person) ref.lastVersion().block());
                 }
 
@@ -107,7 +104,7 @@ public class ComplexDatabase {
         };
         final DataSet.UpdateTrigger<Relation> personUpdateTrigger = new DataSet.UpdateTrigger<Relation>() {
 
-            private Map<Tuple2<Integer,Byte>, DataSet.Entry> memory = new HashMap<>(); // to support large maps, prefer off-heap Chronicle Map
+            private Map<Tuple2<Integer,Byte>, Entry> memory = new HashMap<>(); // to support large maps, prefer off-heap Chronicle Map
 
             @Override
             public void apply(int index, byte version, UpdateOf<Relation> value) {
@@ -115,7 +112,7 @@ public class ComplexDatabase {
                     final DataView<Person> persons = database.getDataView("persons");
 
                     final Tuple2<Integer, Byte> key = Tuples.of(index, version);
-                    DataSet<Person>.Entry ref = memory.get(key);
+                    Entry<Person> ref = memory.get(key);
                     if (ref == null) {
                         final RandomSequence r = new RandomSequence(index);
                         ref = persons.selectOne(r);
@@ -156,7 +153,7 @@ public class ComplexDatabase {
         database.getDataView("relations").traverseDataSet(true)
                 .parallel()
                 .runOn(Schedulers.parallel())
-                .map(DataSet.Entry::lastVersion)
+                .map(Entry::lastVersion)
                 .sequential()
                 .count().block();
 
@@ -164,10 +161,10 @@ public class ComplexDatabase {
     }
 
     public Flux<Person> traversePersons() {
-        return database.<Person>getDataView("persons").traverseDataSet(true).flatMap(DataSet.Entry::lastVersion);
+        return database.<Person>getDataView("persons").traverseDataSet(true).flatMap(Entry::lastVersion);
     }
     public Flux<Relation> traverseRelations() {
-        return database.<Relation>getDataView("relations").traverseDataSet(true).flatMap(DataSet.Entry::lastVersion);
+        return database.<Relation>getDataView("relations").traverseDataSet(true).flatMap(Entry::lastVersion);
     }
 
     public <T> DataView<T> getDataView(String name) {

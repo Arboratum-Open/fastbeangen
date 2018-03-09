@@ -7,9 +7,12 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.SynchronousSink;
 
 import java.util.Arrays;
+import java.util.BitSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 /**
@@ -38,15 +41,30 @@ class UnionDataView<T> implements DataView<T> {
     }
 
     @Override
-    public DataSet<T>.Entry selectOne(RandomSequence r) {
-        int index = selectChildIndexRandBySize(r);
+    public Entry<T> selectOne(RandomSequence r) {
+
+        int index = selectChildIndexRandBySize(r, null);
 
         if (index == -1) return null;
 
-        return children[index].selectOne(r);
+        Entry entry = children[index].selectOne(r);
+
+        if (entry == null) {
+            final BitSet exclude = new BitSet();
+            while (entry == null) {
+                exclude.set(index);
+
+                index = selectChildIndexRandBySize(r, exclude);
+
+                if (index == -1) return null;
+
+                entry = children[index].selectOne(r);
+            }
+        }
+        return entry;
     }
 
-    private int selectChildIndexRandBySize(RandomSequence r) {
+    private int selectChildIndexRandBySize(RandomSequence r, final BitSet exclude) {
         long[] ranges = new long[children.length];
         int[] nonEmptySets = new int[children.length];
         long acc = 0;
@@ -54,7 +72,7 @@ class UnionDataView<T> implements DataView<T> {
         for (int i = 0, childrenLength = children.length; i < childrenLength; i++) {
             final DataView child = children[i];
             final int size = child.getSize();
-            if (size > 0) {
+            if (size > 0 && (exclude == null || !exclude.get(i))) {
                 acc += size;
                 ranges[j] = acc - 1;
                 nonEmptySets[j] = i;
@@ -77,7 +95,7 @@ class UnionDataView<T> implements DataView<T> {
         return new Generator<T>(getEntryType()) {
             @Override
             public T generate(RandomSequence register) {
-                final DataSet<T>.Entry entry = selectOne(register);
+                final Entry<T> entry = selectOne(register);
 
                 return (entry != null) ? entry.lastVersion().block() : null;
             }
@@ -85,7 +103,7 @@ class UnionDataView<T> implements DataView<T> {
     }
 
     @Override
-    public Flux<DataSet<T>.Entry> traverseDataSet(boolean includeDeleted) {
+    public Flux<Entry<T>> traverseDataSet(boolean includeDeleted) {
         return Flux.fromArray(children).concatMap(dataView -> dataView.traverseDataSet(includeDeleted));
     }
 
@@ -102,7 +120,7 @@ class UnionDataView<T> implements DataView<T> {
 
             @Override
             public void accept(SynchronousSink<DataSet<T>.Operation> fluxSink) {
-                int index = UnionDataView.this.selectChildIndexRandBySize(r);
+                int index = UnionDataView.this.selectChildIndexRandBySize(r, null);
 
                 final Iterator<DataSet<T>.Operation> feed = (index == -1) ? feeds[r.nextInt(feeds.length)] : feeds[index];
 
@@ -125,5 +143,22 @@ class UnionDataView<T> implements DataView<T> {
     @Override
     public int getSize() {
         return Stream.of(children).mapToInt(DataView::getSize).sum();
+    }
+
+    @Override
+    public <U> DataView<U> transformedView(Function<T, U> transformFunction, Class<U> targetType) {
+        final DataView<U>[] newChildren = Arrays.stream(children)
+                .map(v -> v.transformedView(transformFunction, targetType))
+                .toArray(DataView[]::new);
+
+        return new UnionDataView<>(targetType, newChildren);
+    }
+
+    @Override
+    public DataView<T> filteredView(Predicate<T> acceptPredicate) {
+        final DataView<T>[] newChildren = Arrays.stream(children)
+                .map(v -> v.filteredView(acceptPredicate))
+                .toArray(DataView[]::new);
+        return new UnionDataView<>(getEntryType(), newChildren);
     }
 }

@@ -17,6 +17,11 @@ public strictfp class RandomSequence {
     private final long seed;
     private long register;
 
+    private RandomSequence(long seed, long register) {
+        this.seed = seed;
+        this.register = register;
+    }
+
     public RandomSequence(long id) {
         this.seed = id;
         if (id < 0) throw new IllegalArgumentException("only positive id are supported");
@@ -167,5 +172,10 @@ public strictfp class RandomSequence {
             }
         }).limit(toExclusive - fromInclusive);
 
+    }
+
+    public RandomSequence fork() {
+        register = shift(register);
+        return new RandomSequence(seed, register);
     }
 }

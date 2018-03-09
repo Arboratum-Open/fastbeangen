@@ -44,15 +44,15 @@ public class DataSetTest {
         StepVerifier.create(flux.take(10) .map(op -> Tuples.of(op.getEntry().getElementIndex(), op.getEntry().getElementVersion())))
                 .expectNext(
                         Tuples.of(0, (byte) 1),
-                        Tuples.of(1, (byte) 1),
-                        Tuples.of(1, (byte) 2),
-                        Tuples.of(2, (byte) 1),
-                        Tuples.of(2, (byte) -1),
-                        Tuples.of(3, (byte) 1),
                         Tuples.of(0, (byte) 2),
-                        Tuples.of(1, (byte) 3),
-                        Tuples.of(0, (byte) 3),
-                        Tuples.of(0, (byte) -3))
+                        Tuples.of(1, (byte) 1),
+                        Tuples.of(2, (byte) 1),
+                        Tuples.of(1, (byte) 2),
+                        Tuples.of(3, (byte) 1),
+                        Tuples.of(0, (byte) -2),
+                        Tuples.of(4, (byte) 1),
+                        Tuples.of(4, (byte) 2),
+                        Tuples.of(4, (byte) 3))
                 .verifyComplete();
     }
 
@@ -82,15 +82,15 @@ public class DataSetTest {
         StepVerifier.create(flux.take(10).map(op -> Tuples.of(op.getEntry().getElementIndex(), op.getEntry().getElementVersion())))
                 .expectNext(
                         Tuples.of(0, (byte)1),
-                        Tuples.of(0, (byte)2),
-                        Tuples.of(0, (byte)3),
-                        Tuples.of(0, (byte)-3),
+                        Tuples.of(0, (byte)-1),
                         Tuples.of(1, (byte)1),
-                        Tuples.of(1, (byte)2),
-                        Tuples.of(1, (byte)-2),
                         Tuples.of(2, (byte)1),
-                        Tuples.of(2, (byte)-1),
-                        Tuples.of(3, (byte)1))
+                        Tuples.of(2, (byte)2),
+                        Tuples.of(2, (byte)3),
+                        Tuples.of(1, (byte)-1),
+                        Tuples.of(2, (byte)4),
+                        Tuples.of(2, (byte)5),
+                        Tuples.of(2, (byte)6))
                 .verifyComplete();
     }
 
@@ -111,7 +111,7 @@ public class DataSetTest {
 
 
 
-        final Flux<DataSet<Integer>.Entry> flux = pojo.traverseDataSet(true);
+        final Flux<Entry<Integer>> flux = pojo.traverseDataSet(true);
 
         StepVerifier.create(flux.map(op -> Tuples.of(op.getElementIndex(), op.getElementVersion())))
                 .expectNext(Tuples.of(0, (byte)1),
@@ -119,16 +119,16 @@ public class DataSetTest {
                         Tuples.of(2, (byte)2))
                 .verifyComplete();
 
-        final Flux<DataSet<Integer>.Entry> fluxNoDeleted = pojo.traverseDataSet(false);
+        final Flux<Entry<Integer>> fluxNoDeleted = pojo.traverseDataSet(false);
 
         StepVerifier.create(fluxNoDeleted.map(op -> Tuples.of(op.getElementIndex(), op.getElementVersion())))
                 .expectNext(Tuples.of(0, (byte)1),
                         Tuples.of(2, (byte)2))
                 .verifyComplete();
 
-        final Iterator<DataSet<Integer>.Entry> entries = pojo.traverseDataSet(true).toIterable().iterator();
+        final Iterator<Entry<Integer>> entries = pojo.traverseDataSet(true).toIterable().iterator();
 
-        DataSet.Entry entry = entries.next();
+        Entry<Integer> entry = entries.next();
         StepVerifier.create(entry.allVersions())
                 .expectNext(1)
                 .expectComplete();
@@ -219,7 +219,7 @@ public class DataSetTest {
 
         // check all entries
         for (int i = 0; i < 4; i++) {
-            final DataSet<Pojo2>.Entry entry = pojo2DataSet.get(i);
+            final Entry<Pojo2> entry = pojo2DataSet.get(i);
             Assert.assertEquals(i, entry.getElementIndex());
             Assert.assertEquals(1, entry.getElementVersion());
             Assert.assertEquals(1, entry.allVersions().count().block().intValue());
@@ -238,32 +238,32 @@ public class DataSetTest {
         {
             DataSet<Pojo2>.Operation op = iterator.next();
 
-            // element 3 is deleted
+            // element 2 is deleted
             {
                 Assert.assertEquals(0, op.getSequenceId());
-                final DataSet<Pojo2>.Entry entry = op.getEntry();
-                Assert.assertEquals(3, entry.getElementIndex());
+                final Entry<Pojo2> entry = op.getEntry();
+                Assert.assertEquals(2, entry.getElementIndex());
                 Assert.assertEquals(-1, entry.getElementVersion());
                 Assert.assertEquals(1, entry.allVersions().count().block().intValue());
                 Assert.assertEquals(DataView.OpCode.DELETE, entry.getLastOperation());
                 Assert.assertEquals(false, entry.isLive());
                 Assert.assertEquals(true, entry.isDeleted());
                 final Pojo2 lastVersion = entry.lastVersion().block();
-                Assert.assertEquals(3, lastVersion.id);
+                Assert.assertEquals(2, lastVersion.id);
                 Assert.assertEquals(1, lastVersion.version);
             }
 
             // before we ack, no change when we do get or random select it
             {
-                final DataSet<Pojo2>.Entry entry = pojo2DataSet.get(3);
-                Assert.assertEquals(3, entry.getElementIndex());
+                final Entry<Pojo2> entry = pojo2DataSet.get(2);
+                Assert.assertEquals(2, entry.getElementIndex());
                 Assert.assertEquals(1, entry.getElementVersion());
                 Assert.assertEquals(1, entry.allVersions().count().block().intValue());
                 Assert.assertEquals(DataView.OpCode.CREATE, entry.getLastOperation());
                 Assert.assertEquals(true, entry.isLive());
                 Assert.assertEquals(false, entry.isDeleted());
                 final Pojo2 lastVersion = entry.lastVersion().block();
-                Assert.assertEquals(3, lastVersion.id);
+                Assert.assertEquals(2, lastVersion.id);
                 Assert.assertEquals(1, lastVersion.version);
             }
 
@@ -273,46 +273,46 @@ public class DataSetTest {
 
             // after we ack, no change when we do get or random select it
             {
-                final DataSet<Pojo2>.Entry entry = pojo2DataSet.get(3);
-                Assert.assertEquals(3, entry.getElementIndex());
+                final Entry<Pojo2> entry = pojo2DataSet.get(2);
+                Assert.assertEquals(2, entry.getElementIndex());
                 Assert.assertEquals(-1, entry.getElementVersion());
                 Assert.assertEquals(1, entry.allVersions().count().block().intValue());
                 Assert.assertEquals(DataView.OpCode.DELETE, entry.getLastOperation());
                 Assert.assertEquals(false, entry.isLive());
                 Assert.assertEquals(true, entry.isDeleted());
                 final Pojo2 lastVersion = entry.lastVersion().block();
-                Assert.assertEquals(3, lastVersion.id);
+                Assert.assertEquals(2, lastVersion.id);
                 Assert.assertEquals(1, lastVersion.version);
             }
 
             op = iterator.next();
 
-            // element 1 is updated
+            // element 0 is updated
             {
                 Assert.assertEquals(1, op.getSequenceId());
-                final DataSet<Pojo2>.Entry entry = op.getEntry();
-                Assert.assertEquals(1, entry.getElementIndex());
+                final Entry<Pojo2> entry = op.getEntry();
+                Assert.assertEquals(0, entry.getElementIndex());
                 Assert.assertEquals(2, entry.getElementVersion());
                 Assert.assertEquals(2, entry.allVersions().count().block().intValue());
                 Assert.assertEquals(DataView.OpCode.UPDATE, entry.getLastOperation());
                 Assert.assertEquals(true, entry.isLive());
                 Assert.assertEquals(false, entry.isDeleted());
                 final Pojo2 lastVersion = entry.lastVersion().block();
-                Assert.assertEquals(1, lastVersion.id);
+                Assert.assertEquals(0, lastVersion.id);
                 Assert.assertEquals(2, lastVersion.version);
             }
 
             // before we ack, no change when we do get or random select it
             {
-                final DataSet<Pojo2>.Entry entry = pojo2DataSet.get(1);
-                Assert.assertEquals(1, entry.getElementIndex());
+                final Entry<Pojo2> entry = pojo2DataSet.get(0);
+                Assert.assertEquals(0, entry.getElementIndex());
                 Assert.assertEquals(1, entry.getElementVersion());
                 Assert.assertEquals(1, entry.allVersions().count().block().intValue());
                 Assert.assertEquals(DataView.OpCode.CREATE, entry.getLastOperation());
                 Assert.assertEquals(true, entry.isLive());
                 Assert.assertEquals(false, entry.isDeleted());
                 final Pojo2 lastVersion = entry.lastVersion().block();
-                Assert.assertEquals(1, lastVersion.id);
+                Assert.assertEquals(0, lastVersion.id);
                 Assert.assertEquals(1, lastVersion.version);
             }
 
@@ -322,15 +322,15 @@ public class DataSetTest {
 
             // after we ack, no change when we do get or random select it
             {
-                final DataSet<Pojo2>.Entry entry = pojo2DataSet.get(1);
-                Assert.assertEquals(1, entry.getElementIndex());
+                final Entry<Pojo2> entry = pojo2DataSet.get(0);
+                Assert.assertEquals(0, entry.getElementIndex());
                 Assert.assertEquals(2, entry.getElementVersion());
                 Assert.assertEquals(2, entry.allVersions().count().block().intValue());
                 Assert.assertEquals(DataView.OpCode.UPDATE, entry.getLastOperation());
                 Assert.assertEquals(true, entry.isLive());
                 Assert.assertEquals(false, entry.isDeleted());
                 final Pojo2 lastVersion = entry.lastVersion().block();
-                Assert.assertEquals(1, lastVersion.id);
+                Assert.assertEquals(0, lastVersion.id);
                 Assert.assertEquals(2, lastVersion.version);
             }
         }

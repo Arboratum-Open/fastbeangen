@@ -3,8 +3,8 @@ package com.arboratum.beangen.example1;
 import au.com.bytecode.opencsv.CSVWriter;
 import au.com.bytecode.opencsv.ResultSetHelper;
 import au.com.bytecode.opencsv.ResultSetHelperService;
-import com.arboratum.beangen.database.DataSet;
 import com.arboratum.beangen.database.DataView;
+import com.arboratum.beangen.database.Entry;
 import com.arboratum.beangen.example1.model.Person;
 import com.arboratum.beangen.example1.model.Relation;
 import com.beust.jcommander.JCommander;
@@ -338,7 +338,7 @@ public class DatabaseGeneratorAsCSVTest {
                     }));
     }
 
-    private Flux<TemporaryDatabase> bufferInMemorySQLDbUsingHibernate(Flux<DataSet.Entry> source) {
+    private Flux<TemporaryDatabase> bufferInMemorySQLDbUsingHibernate(Flux<Entry> source) {
         return source
                 .buffer(20000)
                 .map(peopleBlock -> {
@@ -357,7 +357,7 @@ public class DatabaseGeneratorAsCSVTest {
 
 
                     for (int i = 0, peopleBlockSize = peopleBlock.size(); i < peopleBlockSize; i++) {
-                        DataSet.Entry e = peopleBlock.get(i);
+                        Entry e = peopleBlock.get(i);
                         session.persist(e.lastVersion().block());
                         if (i % 50 == 0) {
                             session.flush();

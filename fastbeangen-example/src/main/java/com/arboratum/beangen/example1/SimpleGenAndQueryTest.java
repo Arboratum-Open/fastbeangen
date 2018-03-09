@@ -2,6 +2,7 @@ package com.arboratum.beangen.example1;
 
 import com.arboratum.beangen.Generator;
 import com.arboratum.beangen.database.DataSet;
+import com.arboratum.beangen.database.Entry;
 import com.arboratum.beangen.example1.model.Person;
 import com.beust.jcommander.JCommander;
 import com.google.common.base.Stopwatch;
@@ -184,7 +185,7 @@ public class SimpleGenAndQueryTest {
                     Stopwatch stopwatch = Stopwatch.createStarted();
 
                     try {
-                        final DataSet<Person>.Entry entry = operation.getEntry();
+                        final Entry<Person> entry = operation.getEntry();
                         switch (entry.getLastOperation()) {
                             case CREATE:
                                 dao.insert(entry.lastVersion().block());

@@ -27,7 +27,7 @@ public class BeanGeneratorBuilder<CLASS> extends AbstractGeneratorBuilder<CLASS>
     private final SortedMap<String, Generator> populators = new TreeMap<>();
     private final LinkedHashMap<Object, Generator> populators2 = new LinkedHashMap<>();
     private String idfield;
-    private List<Generator<CombinedFieldValue<CLASS>>> updateOfPopulators = new ArrayList();
+    private List<Generator<? extends CombinedFieldValue<CLASS>>> updateOfPopulators = new ArrayList();
 
     public BeanGeneratorBuilder(Class<CLASS> type) {
         super(type);
@@ -61,7 +61,7 @@ public class BeanGeneratorBuilder<CLASS> extends AbstractGeneratorBuilder<CLASS>
                 .map(updateGenerator -> new Populator(new ValueAssigner<CLASS, CombinedFieldValue<CLASS>>() {
                     @Override
                     public void assign(CLASS object, CombinedFieldValue<CLASS> updateOf) {
-                        updateOf.apply(object);
+                        if (updateOf != null) updateOf.apply(object);
                     }
 
                     @Override
@@ -157,7 +157,7 @@ public class BeanGeneratorBuilder<CLASS> extends AbstractGeneratorBuilder<CLASS>
 
     }
 
-    public BeanGeneratorBuilder<CLASS> with(Generator<CombinedFieldValue<CLASS>> generator) {
+    public BeanGeneratorBuilder<CLASS> with(Generator<? extends CombinedFieldValue<CLASS>> generator) {
         updateOfPopulators.add(generator);
         return this;
     }

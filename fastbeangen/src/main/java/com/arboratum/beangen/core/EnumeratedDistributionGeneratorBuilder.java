@@ -40,13 +40,24 @@ public class EnumeratedDistributionGeneratorBuilder<CLASS> extends AbstractGener
                     throw new IllegalArgumentException("number of weights differ from the number of values");
                 final double[] cumulativeProbabilities = buildCumProbs();
 
-                setup(randomSequence -> {
-                    int index = Arrays.binarySearch(cumulativeProbabilities, randomSequence.nextDouble());
-                    if (index < 0) {
-                        index = -index - 1;
-                    }
-                    return fixValues[index];
-                });
+
+                if (weights.length == 1) {
+                    final CLASS fixValue0 = fixValues[0];
+                    setup(randomSequence -> fixValue0);
+                } else if (weights.length == 2) {
+                    final CLASS fixValue0 = fixValues[0];
+                    final CLASS fixValue1 = fixValues[1];
+                    final double p = cumulativeProbabilities[0];
+                    setup(randomSequence -> randomSequence.nextDouble() < p ? fixValue0 : fixValue1);
+                } else {
+                    setup(randomSequence -> {
+                        int index = Arrays.binarySearch(cumulativeProbabilities, randomSequence.nextDouble());
+                        if (index < 0) {
+                            index = -index - 1;
+                        }
+                        return fixValues[index];
+                    });
+                }
             } else {
                 setup(randomSequence -> fixValues[randomSequence.nextInt(len)]);
             }
@@ -59,13 +70,27 @@ public class EnumeratedDistributionGeneratorBuilder<CLASS> extends AbstractGener
                     throw new IllegalArgumentException("number of weights differ from the number of values");
                 final double[] cumulativeProbabilities = buildCumProbs();
 
-                setup(randomSequence -> {
-                    int index = Arrays.binarySearch(cumulativeProbabilities, randomSequence.nextDouble());
-                    if (index < 0) {
-                        index = -index - 1;
-                    }
-                    return genValues[index].generate(randomSequence);
-                });
+                if (weights.length == 1) {
+                    final Generator<CLASS> genValue0 = genValues[0];
+                    setup(randomSequence -> genValue0.generate(randomSequence));
+                } else if (weights.length == 2) {
+                    final Generator<CLASS> genValue0 = genValues[0];
+                    final Generator<CLASS> genValue1 = genValues[1];
+                    final double p = cumulativeProbabilities[0];
+                    setup(randomSequence -> {
+                        final Generator<CLASS> gen = randomSequence.nextDouble() < p ? genValue0 : genValue1;
+                        return gen.generate(randomSequence);
+                    });
+                } else {
+
+                    setup(randomSequence -> {
+                        int index = Arrays.binarySearch(cumulativeProbabilities, randomSequence.nextDouble());
+                        if (index < 0) {
+                            index = -index - 1;
+                        }
+                        return genValues[index].generate(randomSequence);
+                    });
+                }
             } else {
                 setup(randomSequence -> genValues[randomSequence.nextInt(len)].generate(randomSequence));
             }
