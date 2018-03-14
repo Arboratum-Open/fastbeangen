@@ -76,11 +76,11 @@ class FilteredDataView<S,T> implements DataView<T> {
 
 
     private Entry<T> doSelectOne(RandomSequence root) {
+        final RandomSequence r = root.fork();
 
         if (source.getSize() == 0 || filterFull) return null;
 
 
-        final RandomSequence r = root.fork();
         final MutableRoaringBitmap filter;
 
         if (cacheFilter) {
