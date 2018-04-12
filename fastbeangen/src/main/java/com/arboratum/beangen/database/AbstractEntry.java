@@ -1,34 +1,50 @@
 package com.arboratum.beangen.database;
 
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.util.function.Tuple2;
 
 /**
  * @author gpicron.
  */
 public abstract class AbstractEntry<T> implements  Entry<T>{
-    private Flux<Tuple2<UpdateOf<T>, T>> allUpdatesAndEntry;
+    private volatile EntryVersion<T> evaluated;
 
-    public Flux<T> allVersions() {
-       return allUpdatesAndEntry().map(Tuple2::getT2);
-    }
 
-    public abstract Flux<Tuple2<UpdateOf<T>, T>> buildAllUpdatesAndEntry();
+    protected abstract EntryVersion buildAllUpdatesHistory();
 
-    @Override
-    public Flux<Tuple2<UpdateOf<T>, T>> allUpdatesAndEntry() {
-        if (allUpdatesAndEntry == null) {
-            allUpdatesAndEntry = buildAllUpdatesAndEntry().cache();
+    private Mono<EntryVersion<T>> evaluated() {
+        if (evaluated == null) {
+            return Mono.fromCallable(() -> {
+                synchronized (this) {
+                    if (evaluated == null) evaluated = buildAllUpdatesHistory();
+                }
+                return evaluated;
+            });
+        } else {
+            return Mono.just(evaluated);
         }
-        return allUpdatesAndEntry;
     }
 
     public Mono<T> lastVersion() {
-            return allVersions().last();
-        }
+        return evaluated().map(e -> e.entry);
+    }
+
+    public Mono<Integer> lastUpdateGeneratorIndex() {
+        return evaluated().map(e -> e.updateGeneratorIndex);
+    }
 
     public Mono<UpdateOf<T>> lastUpdate() {
-        return allUpdatesAndEntry().filter(t -> t.getT1() != null).map(Tuple2::getT1).last();
+        return evaluated().map(e -> e.updateOf);
+    }
+
+    protected static class EntryVersion<ENTRY> {
+        UpdateOf<ENTRY> updateOf;
+        ENTRY entry;
+        int updateGeneratorIndex;
+
+        public EntryVersion(UpdateOf<ENTRY> updateOf, ENTRY entry, int updateGeneratorIndex) {
+            this.updateOf = updateOf;
+            this.entry = entry;
+            this.updateGeneratorIndex = updateGeneratorIndex;
+        }
     }
 }

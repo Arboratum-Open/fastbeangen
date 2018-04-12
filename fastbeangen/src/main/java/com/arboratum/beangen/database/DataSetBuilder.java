@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 
 /**
  * Created by gpicron on 11/02/2017.
@@ -19,15 +20,37 @@ import java.util.Map;
 public strictfp class DataSetBuilder<T> {
 
 
+    protected static class WeightedUpdateGenerator<T> {
+        private final double weight;
+        private final UpdateGenerator<T> updateGenerator;
+
+        public WeightedUpdateGenerator(double weight, UpdateGenerator<T> updateGenerator) {
+            this.weight = weight;
+            this.updateGenerator = updateGenerator;
+        }
+
+        public double getWeight() {
+            return weight;
+        }
+
+        public UpdateGenerator<T> getUpdateGenerator() {
+            return updateGenerator;
+        }
+
+    }
+
     private int offset;
     private int numInitialEntries;
     private Generator<DataView.OpCode> initOpGenerator;
     private Generator<DataView.OpCode> updateOpGenerator;
     private Generator<T> entryGenerator;
-    private UpdateGenerator<T> updateGenerator;
+    private List<WeightedUpdateGenerator<T>> updateGenerators = new ArrayList<>();
     private List<DataSet.CreateTrigger<T>> createTriggers = new ArrayList<>();
     private List<DataSet.UpdateTrigger<T>> updateTriggers = new ArrayList<>();
     private Scheduler scheduler = Schedulers.single();
+    private Predicate<T> creationCheck;
+    private Predicate<T> deletionCheck;
+
 
     public DataSetBuilder<T> offset(int skip) {
         this.offset = skip;
@@ -47,10 +70,10 @@ public strictfp class DataSetBuilder<T> {
         return this;
     }
 
-    public DataSetBuilder<T> thenUpdatedWith(double weightCreate, double weigthUpdate, double weightDelete) {
+    public DataSetBuilder<T> thenUpdatedWith(double weightCreate, double weigthGlobalUpdate, double weightDelete) {
         updateOpGenerator =  BaseBuilders.enumerated(DataView.OpCode.class)
                 .values(DataView.OpCode.values())
-                .weights(weightCreate, weigthUpdate, weightDelete)
+                .weights(weightCreate, weigthGlobalUpdate, weightDelete)
                 .build();
         return this;
     }
@@ -60,12 +83,24 @@ public strictfp class DataSetBuilder<T> {
         this.entryGenerator = entryGenerator;
         return this;
     }
-
-    public DataSetBuilder<T> withUpdateGenerator(UpdateGenerator<T> updateGenerator) {
-        this.updateGenerator = updateGenerator;
+    public DataSetBuilder<T> withCreationCheck(Predicate<T> creationCheck) {
+        this.creationCheck = creationCheck;
         return this;
     }
 
+    public DataSetBuilder<T> withDeletionCheck(Predicate<T> deletionCheck) {
+        this.deletionCheck = deletionCheck;
+        return this;
+    }
+
+    public DataSetBuilder<T> withUpdateGenerator(UpdateGenerator<T> updateGenerator) {
+        return withUpdateGenerator(updateGenerator, 1d);
+    }
+
+    public DataSetBuilder<T> withUpdateGenerator(UpdateGenerator<T> updateGenerator, double weight) {
+        this.updateGenerators.add(new WeightedUpdateGenerator<T>(weight, updateGenerator));
+        return this;
+    }
 
     public DataSet<T> build() {
         Frequency previous = new Frequency();
@@ -120,7 +155,7 @@ public strictfp class DataSetBuilder<T> {
             if (v > 0) required--;
         }
 
-        return new DataSet<T>(updateOpGenerator, versions, j-1, entryGenerator, updateGenerator,
+        return new DataSet<T>(updateOpGenerator, creationCheck, deletionCheck, versions, j-1, entryGenerator, updateGenerators,
                 (createTriggers.size() == 0) ? null : createTriggers.toArray(new DataSet.CreateTrigger[0]),
                 (updateTriggers.size() == 0) ? null : updateTriggers.toArray(new DataSet.UpdateTrigger[0]), scheduler, offset);
     }

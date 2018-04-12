@@ -10,26 +10,33 @@ import reactor.core.publisher.SynchronousSink;
 import reactor.core.publisher.TopicProcessor;
 import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
-import reactor.util.function.Tuple2;
-import reactor.util.function.Tuples;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.stream.IntStream;
+
+import static com.arboratum.beangen.BaseBuilders.enumerated;
 
 /**
  * Created by gpicron on 15/12/2016.
  */
 public class DataSet<ENTRY> implements DataView<ENTRY> {
     private final Generator<ENTRY> entryGenerator;
-    private final UpdateGenerator<ENTRY> updateGenerator;
+    private final Predicate<ENTRY> creationCheck;
+    private final Predicate<ENTRY> deletionCheck;
+    private final UpdateGenerator<ENTRY>[] updateGenerators;
+    private final Generator<Integer> updateGeneratorsIndexGenerator;
     private final CreateTrigger<ENTRY>[] createTriggers;
     private final UpdateTrigger<ENTRY>[] updateTriggers;
     private final Scheduler scheduler;
     private final int offset;
+    private final int numUpdateGenerators;
+    private FilteredDataView[] filteredViews;
 
 
     public static <T> DataSetBuilder<T> builder() {
@@ -71,6 +78,18 @@ public class DataSet<ENTRY> implements DataView<ENTRY> {
     // marker op when not able to generate a valid op
     private final Operation NON_GENERATABLE_FOR_ID = new Operation( -1, null);
 
+    public void registerFilteredDataView(FilteredDataView<ENTRY, ?> filteredDataView) {
+        if (this.filteredViews == null) {
+            this.filteredViews = new FilteredDataView[1];
+            this.filteredViews[0] = filteredDataView;
+        } else {
+            int length = filteredViews.length;
+            this.filteredViews = Arrays.copyOf(filteredViews, length + 1);
+            filteredViews[length] = filteredDataView;
+        }
+
+    }
+
 
     public static class EntryRef<ENTRY> {
         private final int elementIndex;
@@ -100,6 +119,8 @@ public class DataSet<ENTRY> implements DataView<ENTRY> {
         }
     }
 
+
+
     private class EntryImpl extends AbstractEntry<ENTRY> implements Entry<ENTRY> {
         private final int elementIndex;
         private final byte elementVersion;
@@ -124,27 +145,44 @@ public class DataSet<ENTRY> implements DataView<ENTRY> {
                     '}';
         }
 
-
-        @Override
-        public Flux<Tuple2<UpdateOf<ENTRY>, ENTRY>> buildAllUpdatesAndEntry() {
+        protected EntryVersion<ENTRY> buildAllUpdatesHistory() {
             int v = Math.abs(elementVersion);
             final int elementIndex = this.elementIndex;
             final Generator<ENTRY> entryGenerator = DataSet.this.entryGenerator;
             final CreateTrigger<ENTRY>[] createTriggers = DataSet.this.createTriggers;
 
-            return Flux.create(entryFluxSink -> {
-                final ENTRY value = entryGenerator.generate(elementIndex+offset);
-                if (createTriggers != null) {
-                    for (CreateTrigger<ENTRY> trigger : createTriggers) {
-                        trigger.apply(elementIndex, value);
-                    }
+            int rootId = elementIndex + offset;
+            final ENTRY value = entryGenerator.generate(rootId);
+            int lastUpdateGeneratorIndex = -1;
+            UpdateOf<ENTRY> lastUpdateOf = null;
+            if (createTriggers != null) {
+                for (CreateTrigger<ENTRY> trigger : createTriggers) {
+                    trigger.apply(elementIndex, value);
                 }
+            }
 
-                entryFluxSink.next(Tuples.of(null, value));
-                if (v > 1) {
-                    final RandomSequence seq = new RandomSequence(elementIndex+offset);
 
-                    for (byte i = 2; i <= v; i++) {
+            if (v > 1) {
+                final RandomSequence seq = new RandomSequence(rootId);
+
+                for (byte i = 2; i <= v; i++) {
+                    UpdateGenerator updateGenerator = null;
+                    int updateGeneratorIndex = -1;
+                    for (int j = 0; j < numUpdateGenerators; j++) {
+                        updateGeneratorIndex = (j + rootId) % numUpdateGenerators;
+                        updateGenerator = updateGenerators[updateGeneratorIndex];
+                        if (updateGenerator.canApplyOn(value)) {
+                            break;
+                        } else {
+                            updateGenerator = null;
+                        }
+                    }
+                    // no update possible any more return -1 on index and break
+                    if (updateGenerator == null) {
+                        lastUpdateOf = null;
+                        lastUpdateGeneratorIndex = -2;
+                        break;
+                    } else {
                         final UpdateOf<ENTRY> update = updateGenerator.generate(value, seq);
 
                         if (updateTriggers != null) {
@@ -155,14 +193,13 @@ public class DataSet<ENTRY> implements DataView<ENTRY> {
 
                         update.apply(value);
 
-                        entryFluxSink.next(Tuples.of(update, value));
+                        lastUpdateOf = update;
+                        lastUpdateGeneratorIndex = updateGeneratorIndex;
                     }
                 }
+            }
 
-                entryFluxSink.complete();
-            });
-
-
+            return new EntryVersion(lastUpdateOf, value, lastUpdateGeneratorIndex);
         }
 
         @Override
@@ -225,12 +262,20 @@ public class DataSet<ENTRY> implements DataView<ENTRY> {
                 versions[entry.elementIndex] = entry.elementVersion;
                 if (entry.elementVersion == 1) lastIndex = Math.max(lastIndex, entry.elementIndex);
                 switch (opCode) {
-                    case CREATE:
+                    case CREATE: {
                         size++;
                         break;
+                    }
                     case DELETE: {
                         size--;
                         break;
+                    }
+                    case UPDATE: {
+                        if (filteredViews != null) {
+                            for (FilteredDataView f : filteredViews) {
+                                f.clearCache(entry);
+                            }
+                        }
                     }
                 }
             } else {
@@ -245,6 +290,10 @@ public class DataSet<ENTRY> implements DataView<ENTRY> {
                     ", entry=" + entry +
                     '}';
         }
+
+        public boolean isInvalidOperation() {
+            return this == NON_GENERATABLE_FOR_ID;
+        }
     }
 
     private final TopicProcessor<Operation> operationAcks = TopicProcessor.share("Operation-Acks", 8);
@@ -257,13 +306,20 @@ public class DataSet<ENTRY> implements DataView<ENTRY> {
 
     private boolean feedBuilt =  false;
 
-    DataSet(Generator<OpCode> operationGenerator, byte[] versions, int lastIndex, Generator<ENTRY> entryGenerator, UpdateGenerator<ENTRY> updateGenerator, CreateTrigger<ENTRY>[] createTriggers, UpdateTrigger<ENTRY>[] updateTriggers, Scheduler scheduler, int offset) {
+    DataSet(Generator<OpCode> operationGenerator, Predicate<ENTRY> creationCheck, Predicate<ENTRY> deletionCheck, byte[] versions, int lastIndex, Generator<ENTRY> entryGenerator, List<DataSetBuilder.WeightedUpdateGenerator<ENTRY>> updateGenerators, CreateTrigger<ENTRY>[] createTriggers, UpdateTrigger<ENTRY>[] updateTriggers, Scheduler scheduler, int offset) {
+        this.creationCheck = creationCheck;
+        this.deletionCheck = deletionCheck;
         this.entryGenerator = entryGenerator;
         this.versions = versions;
         this.lastIndex = lastIndex;
         this.size = countActive(versions);
         this.operationGenerator = operationGenerator;
-        this.updateGenerator = updateGenerator;
+        this.updateGenerators = updateGenerators.stream().map(DataSetBuilder.WeightedUpdateGenerator::getUpdateGenerator).toArray(UpdateGenerator[]::new);
+        numUpdateGenerators = updateGenerators.size();
+        this.updateGeneratorsIndexGenerator = (numUpdateGenerators == 0) ? null : enumerated(Integer.class)
+                .values(IntStream.range(0, numUpdateGenerators).boxed().toArray(Integer[]::new))
+                .weights(updateGenerators.stream().mapToDouble(DataSetBuilder.WeightedUpdateGenerator::getWeight).toArray())
+                .build();
         this.createTriggers = createTriggers;
         this.updateTriggers = updateTriggers;
         this.scheduler = scheduler;
@@ -279,7 +335,7 @@ public class DataSet<ENTRY> implements DataView<ENTRY> {
     }
 
     DataSet(Generator<OpCode> operationGenerator) {
-        this(operationGenerator, new byte[0], -1, null, null, null, null, Schedulers.single(), 0);
+        this(operationGenerator, null, null, new byte[0], -1, null, null, null, null, Schedulers.single(), 0);
     }
 
 
@@ -299,12 +355,14 @@ public class DataSet<ENTRY> implements DataView<ENTRY> {
         private int id = 0;
         private int lastIndex;
         private byte[] versions;
+        private byte[] nextUpdateCache;
         private int size;
         private RoaringBitmap existing;
 
         public DataSetFutureState(int lastIndex, byte[] versions) {
             this.lastIndex = lastIndex;
             this.versions = Arrays.copyOf(versions, versions.length);
+            this.nextUpdateCache = new byte[versions.length];
             this.existing = new RoaringBitmap();
             for (int i = 0; i < lastIndex; i++) {
                 if (versions[i] > 0) existing.add(i);
@@ -314,7 +372,7 @@ public class DataSet<ENTRY> implements DataView<ENTRY> {
     }
 
     @Override
-    public Flux<Operation> buildOperationFeed(boolean autoAck) {
+    public Flux<Operation> buildOperationFeed(boolean autoAck, boolean filterNonGeneratable) {
         if (feedBuilt) throw new IllegalStateException("A feed can be built only once");
         feedBuilt =  true;
         if (!autoAck) operationAcks.subscribe(Operation::synchronousAck);  // this guaranty to have a single thread for this
@@ -335,35 +393,110 @@ public class DataSet<ENTRY> implements DataView<ENTRY> {
                         RandomSequence randomSequence = new RandomSequence((long) id);
                         final OpCode opCode = (lastIndex == -1 || size == 0) ? OpCode.CREATE : operationGenerator.generate(randomSequence);
                         switch (opCode) {
-                            case CREATE:
+                            case CREATE: {
                                 int index = lastIndex + 1;
+
+                                EntryImpl entry = new EntryImpl(index, (byte) 1);
+
+                                if (creationCheck != null) {
+                                    while (!creationCheck.test(entry.lastVersion().block())) {
+                                        index++;
+                                        entry = new EntryImpl(index, (byte) 1);
+                                    }
+                                }
 
                                 state.versions = Bytes.ensureCapacity(state.versions, index + 1, 1024);
                                 state.versions[index] = 1;
+                                state.nextUpdateCache = Bytes.ensureCapacity(state.nextUpdateCache, index + 1, 1024);
                                 state.size++;
                                 state.lastIndex = index;
                                 state.existing.add(index);
 
-                                synchronousSink.next(new Operation(id, new EntryImpl(index, (byte) 1)));
+                                synchronousSink.next(new Operation(id, entry));
 
                                 break;
-                            case UPDATE:
-                            case DELETE:
-                                // search random existing entry
-                                int select = state.existing.select(randomSequence.nextInt(size));
+                            }
+                            case UPDATE: {
+                                int nextUpdateWanted = updateGeneratorsIndexGenerator.generate(randomSequence);
 
+                                // search random existing entry on which this update can apply
+                                RoaringBitmap toCheck = state.existing.clone();
+                                int toCheckSize = toCheck.getCardinality();
+                                int updateGeneratorIndex = -1;
+                                int select = -1;
                                 byte version;
-                                if (opCode == OpCode.UPDATE) {
-                                    state.versions[select] = version = (byte) (state.versions[select] + 1);
+                                EntryImpl entry;
+                                do {
+                                    select = toCheck.select(randomSequence.nextInt(toCheckSize));
+
+                                    version = (byte) (state.versions[select] + 1);
+                                    entry = new EntryImpl(select, version);
+
+                                    updateGeneratorIndex = state.nextUpdateCache[select] - 1;
+                                    if (updateGeneratorIndex == -1) { // not cached
+                                        // I need to try the update to ensure it is the one I'm looking for
+                                        updateGeneratorIndex = entry.lastUpdateGeneratorIndex().block();
+                                        state.nextUpdateCache[select] = (byte) (updateGeneratorIndex + 1);
+                                    }
+
+                                    if (updateGeneratorIndex != nextUpdateWanted) {
+                                        select = -1;
+                                        toCheck.remove(select);
+                                        toCheckSize--;
+                                    }
+                                } while (select < 0 && toCheckSize > 0);
+
+                                if (select >= 0) {
+                                    state.versions[select] = version;
+                                    state.nextUpdateCache[select] = 0;
+
+                                    synchronousSink.next(new Operation(id, entry));
                                 } else {
-                                    state.versions[select] = version = (byte) -state.versions[select];
-                                    state.existing.remove(select);
-                                    state.size--;
+                                    synchronousSink.next(NON_GENERATABLE_FOR_ID);
                                 }
 
-                                synchronousSink.next(new Operation(id, new EntryImpl(select, version)));
-
                                 break;
+                            }
+                            case DELETE: {
+                                if (state.size == 0) {
+                                    synchronousSink.next(NON_GENERATABLE_FOR_ID);
+                                } else {
+                                    int select = state.existing.select(randomSequence.nextInt(state.size));
+
+                                    byte version = (byte) -state.versions[select];
+                                    state.versions[select] = version;
+                                    state.existing.remove(select);
+                                    state.size--;
+
+                                    EntryImpl entry = new EntryImpl(select, version);
+
+                                    if (deletionCheck != null) {
+                                        while (entry != null && !deletionCheck.test(entry.lastVersion().block())) {
+                                            if (state.size == 0) {
+                                                entry = null;
+                                            } else {
+                                                select = state.existing.select(randomSequence.nextInt(state.size));
+
+                                                version = (byte) -state.versions[select];
+                                                state.versions[select] = version;
+                                                state.existing.remove(select);
+                                                state.size--;
+
+                                                entry = new EntryImpl(select, version);
+                                            }
+                                        }
+
+                                        if (entry == null) {
+                                            synchronousSink.next(NON_GENERATABLE_FOR_ID);
+                                        } else {
+                                            synchronousSink.next(new Operation(id, entry));
+                                        }
+                                    } else {
+                                        synchronousSink.next(new Operation(id, entry));
+                                    }
+                                }
+                                break;
+                            }
                             default:
                                 throw new RuntimeException("This should never occur");
                         }
@@ -373,9 +506,11 @@ public class DataSet<ENTRY> implements DataView<ENTRY> {
                         return state;
                     }
                 }
-        ).subscribeOn(scheduler);
+        )
 
+                .subscribeOn(scheduler);
 
+        if (filterNonGeneratable) operationFlux = operationFlux.filter(operation -> !operation.isInvalidOperation());
         if (autoAck) operationFlux = operationFlux.doOnNext(Operation::synchronousAck);
         return operationFlux;
     }

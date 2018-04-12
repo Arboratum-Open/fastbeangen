@@ -11,6 +11,7 @@ import reactor.core.scheduler.Schedulers;
 import reactor.test.StepVerifier;
 import reactor.util.function.Tuples;
 
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.concurrent.TimeUnit;
 
@@ -106,7 +107,10 @@ public class DataSetTest {
                 return 1;
             }
         };
-        DataSet<Integer> pojo = new DataSet<>(generator, new byte[]{1, -3, 2}, 2, updateGenerator, (previousValue, randomSequence) -> (UpdateOf<Integer>) integer -> integer + 1, null, null, Schedulers.single(), 0);
+        DataSet<Integer> pojo = new DataSet<>(generator, null, new byte[]{1, -3, 2}, 2, updateGenerator,
+                Arrays.asList(new DataSetBuilder.WeightedUpdateGenerator(1,
+                        (previousValue, randomSequence) -> (UpdateOf<Integer>) integer -> integer + 1))
+                , null, null, Schedulers.single(), 0);
 
 
 
@@ -129,27 +133,16 @@ public class DataSetTest {
         final Iterator<Entry<Integer>> entries = pojo.traverseDataSet(true).toIterable().iterator();
 
         Entry<Integer> entry = entries.next();
-        StepVerifier.create(entry.allVersions())
-                .expectNext(1)
-                .expectComplete();
+
         StepVerifier.create(entry.lastVersion())
                 .expectNext(1)
                 .expectComplete();
 
         entry = entries.next();
-        StepVerifier.create(entry.allVersions())
-                .expectNext(1)
-                .expectNext(2)
-                .expectNext(3)
-                .expectComplete();
         StepVerifier.create(entry.lastVersion())
                 .expectComplete();
 
         entry = entries.next();
-        StepVerifier.create(entry.allVersions())
-                .expectNext(1)
-                .expectNext(2)
-                .expectComplete();
         StepVerifier.create(entry.lastVersion())
                 .expectNext(2)
                 .expectComplete();
@@ -207,11 +200,11 @@ public class DataSetTest {
             }
         };
         DataSet<Pojo2> pojo2DataSet = new DataSet<Pojo2>(
-                opGen,
+                opGen, null,
                 new byte[]{1, 1, 1, 1},
                 3,
                 build,
-                updateGenerator,
+                Arrays.asList(new DataSetBuilder.WeightedUpdateGenerator(1,updateGenerator)),
                 null,
                 null,
                 Schedulers.immediate(),
@@ -222,7 +215,6 @@ public class DataSetTest {
             final Entry<Pojo2> entry = pojo2DataSet.get(i);
             Assert.assertEquals(i, entry.getElementIndex());
             Assert.assertEquals(1, entry.getElementVersion());
-            Assert.assertEquals(1, entry.allVersions().count().block().intValue());
             Assert.assertEquals(DataView.OpCode.CREATE, entry.getLastOperation());
             Assert.assertEquals(true, entry.isLive());
             Assert.assertEquals(false, entry.isDeleted());
@@ -244,7 +236,6 @@ public class DataSetTest {
                 final Entry<Pojo2> entry = op.getEntry();
                 Assert.assertEquals(2, entry.getElementIndex());
                 Assert.assertEquals(-1, entry.getElementVersion());
-                Assert.assertEquals(1, entry.allVersions().count().block().intValue());
                 Assert.assertEquals(DataView.OpCode.DELETE, entry.getLastOperation());
                 Assert.assertEquals(false, entry.isLive());
                 Assert.assertEquals(true, entry.isDeleted());
@@ -258,7 +249,6 @@ public class DataSetTest {
                 final Entry<Pojo2> entry = pojo2DataSet.get(2);
                 Assert.assertEquals(2, entry.getElementIndex());
                 Assert.assertEquals(1, entry.getElementVersion());
-                Assert.assertEquals(1, entry.allVersions().count().block().intValue());
                 Assert.assertEquals(DataView.OpCode.CREATE, entry.getLastOperation());
                 Assert.assertEquals(true, entry.isLive());
                 Assert.assertEquals(false, entry.isDeleted());
@@ -276,7 +266,6 @@ public class DataSetTest {
                 final Entry<Pojo2> entry = pojo2DataSet.get(2);
                 Assert.assertEquals(2, entry.getElementIndex());
                 Assert.assertEquals(-1, entry.getElementVersion());
-                Assert.assertEquals(1, entry.allVersions().count().block().intValue());
                 Assert.assertEquals(DataView.OpCode.DELETE, entry.getLastOperation());
                 Assert.assertEquals(false, entry.isLive());
                 Assert.assertEquals(true, entry.isDeleted());
@@ -293,7 +282,6 @@ public class DataSetTest {
                 final Entry<Pojo2> entry = op.getEntry();
                 Assert.assertEquals(0, entry.getElementIndex());
                 Assert.assertEquals(2, entry.getElementVersion());
-                Assert.assertEquals(2, entry.allVersions().count().block().intValue());
                 Assert.assertEquals(DataView.OpCode.UPDATE, entry.getLastOperation());
                 Assert.assertEquals(true, entry.isLive());
                 Assert.assertEquals(false, entry.isDeleted());
@@ -307,7 +295,6 @@ public class DataSetTest {
                 final Entry<Pojo2> entry = pojo2DataSet.get(0);
                 Assert.assertEquals(0, entry.getElementIndex());
                 Assert.assertEquals(1, entry.getElementVersion());
-                Assert.assertEquals(1, entry.allVersions().count().block().intValue());
                 Assert.assertEquals(DataView.OpCode.CREATE, entry.getLastOperation());
                 Assert.assertEquals(true, entry.isLive());
                 Assert.assertEquals(false, entry.isDeleted());
@@ -325,7 +312,6 @@ public class DataSetTest {
                 final Entry<Pojo2> entry = pojo2DataSet.get(0);
                 Assert.assertEquals(0, entry.getElementIndex());
                 Assert.assertEquals(2, entry.getElementVersion());
-                Assert.assertEquals(2, entry.allVersions().count().block().intValue());
                 Assert.assertEquals(DataView.OpCode.UPDATE, entry.getLastOperation());
                 Assert.assertEquals(true, entry.isLive());
                 Assert.assertEquals(false, entry.isDeleted());

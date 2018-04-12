@@ -108,9 +108,9 @@ class UnionDataView<T> implements DataView<T> {
     }
 
     @Override
-    public Flux<DataSet<T>.Operation> buildOperationFeed(boolean autoAck) {
+    public Flux<DataSet<T>.Operation> buildOperationFeed(boolean autoAck, boolean filterNonGeneratable) {
         final Iterator<DataSet<T>.Operation>[] feeds = Stream.of(children)
-                .map(v -> v.buildOperationFeed(autoAck))
+                .map(v -> v.buildOperationFeed(autoAck, false))
                 .map((operationFlux) -> operationFlux.toIterable(1))
                 .map(Iterable::iterator)
                 .toArray(Iterator[]::new);
@@ -120,14 +120,21 @@ class UnionDataView<T> implements DataView<T> {
 
             @Override
             public void accept(SynchronousSink<DataSet<T>.Operation> fluxSink) {
-                int index = UnionDataView.this.selectChildIndexRandBySize(r, null);
-
-                final Iterator<DataSet<T>.Operation> feed = (index == -1) ? feeds[r.nextInt(feeds.length)] : feeds[index];
-
                 try {
-                    if (feed.hasNext()) {
-                        fluxSink.next(feed.next());
-                    }
+                    DataSet<T>.Operation next = null;
+                    do {
+                        int index = UnionDataView.this.selectChildIndexRandBySize(r, null);
+
+                        final Iterator<DataSet<T>.Operation> feed = (index == -1) ? feeds[r.nextInt(feeds.length)] : feeds[index];
+
+                        if (feed.hasNext()) {
+                            next = feed.next();
+                        } else {
+                            next = null;
+                        }
+                    } while (next == null || next.isInvalidOperation());
+
+                    fluxSink.next(next);
                 } catch (Exception e) {
                     if (e instanceof IllegalStateException) { // caused when we stop consuming
                         fluxSink.complete();

@@ -7,7 +7,6 @@ import com.google.common.cache.CacheBuilder;
 import org.roaringbitmap.buffer.MutableRoaringBitmap;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.util.function.Tuple2;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.locks.Lock;
@@ -57,6 +56,7 @@ class FilteredDataView<S,T> implements DataView<T> {
             readWriteLock = new ReentrantReadWriteLock();
             readLock = readWriteLock.readLock();
             writeLock = readWriteLock.writeLock();
+            source.registerFilteredDataView(this);
         } else {
             readWriteLock = null;
             readLock = null;
@@ -153,6 +153,8 @@ class FilteredDataView<S,T> implements DataView<T> {
         }
     }
 
+
+
     @Override
     public Generator<T> random() {
         return new Generator<T>(getEntryType()) {
@@ -169,7 +171,7 @@ class FilteredDataView<S,T> implements DataView<T> {
     }
 
     @Override
-    public Flux<DataSet<T>.Operation> buildOperationFeed(boolean autoAck) {
+    public Flux<DataSet<T>.Operation> buildOperationFeed(boolean autoAck, boolean filterNonGeneratable) {
         throw new UnsupportedOperationException("UnsupportedOperationException on filtered view");
     }
 
@@ -204,6 +206,25 @@ class FilteredDataView<S,T> implements DataView<T> {
         }, getEntryType(), true);
    }
 
+    public void clearCache(Entry entry) {
+        MutableRoaringBitmap filter = filterCache.getIfPresent(this);
+        if (filter != null) {
+            writeLock.lock();
+            try {
+                boolean checkedRemove = filter.checkedRemove(entry.getElementIndex());
+                if (checkedRemove && filterFull) {
+                    filterFull = false;
+                }
+            } finally {
+                writeLock.unlock();
+            }
+
+
+
+        }
+
+    }
+
     private static class TransformedEntry<S,T> implements Entry<T> {
         private final Entry<S> entry;
         private final Function<? super S, ? extends T> transformFunction;
@@ -217,16 +238,6 @@ class FilteredDataView<S,T> implements DataView<T> {
         @Override
         public OpCode getLastOperation() {
             return entry.getLastOperation();
-        }
-
-        @Override
-        public Flux<T> allVersions() {
-            return entry.allVersions().map(transformFunction);
-        }
-
-        @Override
-        public Flux<Tuple2<UpdateOf<T>, T>> allUpdatesAndEntry() {
-            throw new UnsupportedOperationException("UnsupportedOperationException on transformed view");
         }
 
         @Override

@@ -26,7 +26,11 @@ public interface DataView<ENTRY> {
 
     Flux<Entry<ENTRY>> traverseDataSet(boolean includeDeleted);
 
-    Flux<DataSet<ENTRY>.Operation> buildOperationFeed(boolean autoAck);
+    default Flux<DataSet<ENTRY>.Operation> buildOperationFeed(boolean autoAck) {
+        return buildOperationFeed(autoAck, true);
+    }
+
+    Flux<DataSet<ENTRY>.Operation> buildOperationFeed(boolean autoAck, boolean filterNonGeneratable);
 
     int getSize();
 
