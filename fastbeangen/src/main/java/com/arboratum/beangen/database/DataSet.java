@@ -26,6 +26,7 @@ import static com.arboratum.beangen.BaseBuilders.enumerated;
  * Created by gpicron on 15/12/2016.
  */
 public class DataSet<ENTRY> implements DataView<ENTRY> {
+    private final String name;
     private final Generator<ENTRY> entryGenerator;
     private final Predicate<ENTRY> creationCheck;
     private final Predicate<ENTRY> deletionCheck;
@@ -306,7 +307,8 @@ public class DataSet<ENTRY> implements DataView<ENTRY> {
 
     private boolean feedBuilt =  false;
 
-    DataSet(Generator<OpCode> operationGenerator, Predicate<ENTRY> creationCheck, Predicate<ENTRY> deletionCheck, byte[] versions, int lastIndex, Generator<ENTRY> entryGenerator, List<DataSetBuilder.WeightedUpdateGenerator<ENTRY>> updateGenerators, CreateTrigger<ENTRY>[] createTriggers, UpdateTrigger<ENTRY>[] updateTriggers, Scheduler scheduler, int offset) {
+    DataSet(String name, Generator<OpCode> operationGenerator, Predicate<ENTRY> creationCheck, Predicate<ENTRY> deletionCheck, byte[] versions, int lastIndex, Generator<ENTRY> entryGenerator, List<DataSetBuilder.WeightedUpdateGenerator<ENTRY>> updateGenerators, CreateTrigger<ENTRY>[] createTriggers, UpdateTrigger<ENTRY>[] updateTriggers, Scheduler scheduler, int offset) {
+        this.name = name;
         this.creationCheck = creationCheck;
         this.deletionCheck = deletionCheck;
         this.entryGenerator = entryGenerator;
@@ -335,9 +337,13 @@ public class DataSet<ENTRY> implements DataView<ENTRY> {
     }
 
     DataSet(Generator<OpCode> operationGenerator) {
-        this(operationGenerator, null, null, new byte[0], -1, null, null, null, null, Schedulers.single(), 0);
+        this(null, operationGenerator, null, null, new byte[0], -1, null, null, null, null, Schedulers.single(), 0);
     }
 
+    @Override
+    public String getName() {
+        return name;
+    }
 
     @Override
     public Flux<Entry<ENTRY>> traverseDataSet(boolean includeDeleted) {
@@ -372,7 +378,13 @@ public class DataSet<ENTRY> implements DataView<ENTRY> {
     }
 
     @Override
+    public boolean canGenerateOperations() {
+        return operationGenerator != null;
+    }
+
+    @Override
     public Flux<Operation> buildOperationFeed(boolean autoAck, boolean filterNonGeneratable) {
+        if (!canGenerateOperations()) throw new IllegalStateException("Cannot build a feed on a DataSet "+name+" for which no operationGenerator was configured");
         if (feedBuilt) throw new IllegalStateException("A feed can be built only once");
         feedBuilt =  true;
         if (!autoAck) operationAcks.subscribe(Operation::synchronousAck);  // this guaranty to have a single thread for this

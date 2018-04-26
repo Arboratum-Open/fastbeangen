@@ -19,20 +19,27 @@ import java.util.stream.Stream;
  * Created by gpicron on 12/04/2017.
  */
 class UnionDataView<T> implements DataView<T> {
-
+    private final String name;
     private final DataView[] children;
     private final Class<T> type;
 
-    public UnionDataView(Class<T> type, DataView<? extends T>... dataViews) {
+    public UnionDataView(String name, Class<T> type, DataView<? extends T>... dataViews) {
+        this.name = name;
         this.children = dataViews;
         this.type = type;
     }
 
-    public UnionDataView(DataView<? extends T>... dataViews) {
+    public UnionDataView(String name,DataView<? extends T>... dataViews) {
+        this.name = name;
         this.children = dataViews;
         final List<Class<?>> types = ReflectionUtils.commonSuperClass(Stream.of(children).map(DataView::getEntryType).distinct().toArray(Class[]::new));
 
         this.type = (Class<T>) types.get(0);
+    }
+
+    @Override
+    public String getName() {
+        return name;
     }
 
     @Override
@@ -108,7 +115,13 @@ class UnionDataView<T> implements DataView<T> {
     }
 
     @Override
+    public boolean canGenerateOperations() {
+        return !Stream.of(children).filter(v -> !v.canGenerateOperations()).findAny().isPresent();
+    }
+
+    @Override
     public Flux<DataSet<T>.Operation> buildOperationFeed(boolean autoAck, boolean filterNonGeneratable) {
+        if (!canGenerateOperations()) throw new UnsupportedOperationException("Cannot build feed because at least on of the underlying dataset cannot");
         final Iterator<DataSet<T>.Operation>[] feeds = Stream.of(children)
                 .map(v -> v.buildOperationFeed(autoAck, false))
                 .map((operationFlux) -> operationFlux.toIterable(1))
@@ -158,7 +171,7 @@ class UnionDataView<T> implements DataView<T> {
                 .map(v -> v.transformedView(transformFunction, targetType))
                 .toArray(DataView[]::new);
 
-        return new UnionDataView<>(targetType, newChildren);
+        return new UnionDataView<>(name + "T", targetType, newChildren);
     }
 
     @Override
@@ -166,6 +179,6 @@ class UnionDataView<T> implements DataView<T> {
         final DataView<T>[] newChildren = Arrays.stream(children)
                 .map(v -> v.filteredView(acceptPredicate))
                 .toArray(DataView[]::new);
-        return new UnionDataView<>(getEntryType(), newChildren);
+        return new UnionDataView<>(name + "F", getEntryType(), newChildren);
     }
 }

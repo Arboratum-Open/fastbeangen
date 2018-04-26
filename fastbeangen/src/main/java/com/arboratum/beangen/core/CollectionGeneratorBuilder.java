@@ -16,7 +16,7 @@ public class CollectionGeneratorBuilder<VALUE, COL extends Collection<VALUE>> ex
 
 
     public static final ImmutableSet<Class> SUPPORTED_TYPES = ImmutableSet.of(
-            List.class, Set.class
+            List.class, Set.class, SortedSet.class
     );
 
 
@@ -82,6 +82,21 @@ public class CollectionGeneratorBuilder<VALUE, COL extends Collection<VALUE>> ex
             setup(randomSequence -> {
                 int size = sizeGenerator.apply(randomSequence).intValue();
                 Set r = new LinkedHashSet(size);
+
+                for (int i = 0; r.size() < size; i++) {
+                    r.add(valueGenerator.generate(randomSequence));
+
+                    if (i > 10 * size) {
+                        log.warning("Seems we cannot generate a value for the set that doesn't exist yet. Stop trying.");
+                        break;
+                    }
+                }
+                return (COL) r;
+            });
+        } else if (fieldType.isAssignableFrom(TreeSet.class)) {
+            setup(randomSequence -> {
+                int size = sizeGenerator.apply(randomSequence).intValue();
+                Set r = new TreeSet();
 
                 for (int i = 0; r.size() < size; i++) {
                     r.add(valueGenerator.generate(randomSequence));

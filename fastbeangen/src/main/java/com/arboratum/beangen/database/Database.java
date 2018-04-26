@@ -14,19 +14,19 @@ public class Database {
 
 
     public <T> void addDataSet(String name, DataSetBuilder<T> dataset) {
-        dataSetBuilders.put(name, dataset);
+        dataSetBuilders.put(name, dataset.withName(name));
     }
 
     public <T> DataView createUnionView(String name, Class<T> type, String... names) {
         final DataView[] dataViews = Stream.of(names).map(this::getDataView).toArray(DataView[]::new);
-        final UnionDataView<T> tUnionView = new UnionDataView<>(type, dataViews);
+        final UnionDataView<T> tUnionView = new UnionDataView<>(name, type, dataViews);
         dataSets.put(name, tUnionView);
         return tUnionView;
     }
 
     public <T> DataView createUnionView(String name, String... names) {
         final DataView[] dataViews = Stream.of(names).map(this::getDataView).toArray(DataView[]::new);
-        final UnionDataView<T> tUnionView = new UnionDataView<>(dataViews);
+        final UnionDataView<T> tUnionView = new UnionDataView<>(name, dataViews);
         dataSets.put(name, tUnionView);
         return tUnionView;
     }

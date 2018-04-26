@@ -20,6 +20,7 @@ import java.util.function.Predicate;
 public strictfp class DataSetBuilder<T> {
 
 
+
     protected static class WeightedUpdateGenerator<T> {
         private final double weight;
         private final UpdateGenerator<T> updateGenerator;
@@ -50,6 +51,12 @@ public strictfp class DataSetBuilder<T> {
     private Scheduler scheduler = Schedulers.single();
     private Predicate<T> creationCheck;
     private Predicate<T> deletionCheck;
+    private String name;
+
+    DataSetBuilder<T> withName(String name) {
+        this.name = name;
+        return this;
+    }
 
 
     public DataSetBuilder<T> offset(int skip) {
@@ -155,7 +162,7 @@ public strictfp class DataSetBuilder<T> {
             if (v > 0) required--;
         }
 
-        return new DataSet<T>(updateOpGenerator, creationCheck, deletionCheck, versions, j-1, entryGenerator, updateGenerators,
+        return new DataSet<T>(name, updateOpGenerator, creationCheck, deletionCheck, versions, j-1, entryGenerator, updateGenerators,
                 (createTriggers.size() == 0) ? null : createTriggers.toArray(new DataSet.CreateTrigger[0]),
                 (updateTriggers.size() == 0) ? null : updateTriggers.toArray(new DataSet.UpdateTrigger[0]), scheduler, offset);
     }

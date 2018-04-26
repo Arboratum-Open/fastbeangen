@@ -200,6 +200,7 @@ public class DataSetTest {
             }
         };
         DataSet<Pojo2> pojo2DataSet = new DataSet<Pojo2>(
+                "test",
                 opGen, null,
                 new byte[]{1, 1, 1, 1},
                 3,

@@ -62,6 +62,9 @@ public final class BaseBuilders {
     public static <COL extends Set<VALUE>, VALUE> CollectionGeneratorBuilder<VALUE, COL> aSet() {
         return new CollectionGeneratorBuilder(Set.class);
     }
+    public static <COL extends SortedSet<VALUE>, VALUE extends Comparable> CollectionGeneratorBuilder<VALUE, COL> aSortedSet() {
+        return new CollectionGeneratorBuilder(SortedSet.class);
+    }
 
     public static <CLASS> BeanGeneratorBuilder<CLASS> aBean(Class<CLASS> clazz) {
         return new BeanGeneratorBuilder<CLASS>(clazz);

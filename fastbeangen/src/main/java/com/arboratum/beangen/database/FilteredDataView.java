@@ -22,6 +22,7 @@ class FilteredDataView<S,T> implements DataView<T> {
     private static final Cache<FilteredDataView, MutableRoaringBitmap> filterCache = CacheBuilder.newBuilder()
             .weakValues()
             .build();
+    private final String name;
     private final DataSet<S> source;
     private final Function<Entry<S>, Entry<T>> predicateTranform;
     private final Class<T> targetType;
@@ -33,11 +34,11 @@ class FilteredDataView<S,T> implements DataView<T> {
 
 
     protected static <S,T> FilteredDataView<S,T> createTransformedDataSet(DataSet<S> source, Function<S,T> transform, Class<T> targetType) {
-        return new FilteredDataView<S,T>(source, sEntry -> new TransformedEntry<>(sEntry, transform), targetType, false);
+        return new FilteredDataView<S,T>(source.getName() + "T",  source, sEntry -> new TransformedEntry<>(sEntry, transform), targetType, false);
     }
 
     protected static <T> FilteredDataView<T,T> createFilteredDataSet(DataSet<T> source, Predicate<T> predicate) {
-        return new FilteredDataView<T,T>(source, sEntry -> {
+        return new FilteredDataView<T,T>(source.getName() + "F", source, sEntry -> {
             T value = sEntry.lastVersion().block();
             if (predicate.test(value)) {
                 return sEntry;
@@ -47,7 +48,8 @@ class FilteredDataView<S,T> implements DataView<T> {
         }, source.getEntryType(), true);
     }
 
-    private FilteredDataView(DataSet<S> source, Function<Entry<S>, Entry<T>> predicateTranform, Class<T> targetType, boolean cacheFilter) {
+    private FilteredDataView(String name, DataSet<S> source, Function<Entry<S>, Entry<T>> predicateTranform, Class<T> targetType, boolean cacheFilter) {
+        this.name = name;
         this.source = source;
         this.predicateTranform = predicateTranform;
         this.targetType = targetType;
@@ -62,6 +64,11 @@ class FilteredDataView<S,T> implements DataView<T> {
             readLock = null;
             writeLock = null;
         }
+    }
+
+    @Override
+    public String getName() {
+        return name;
     }
 
     @Override
@@ -171,6 +178,11 @@ class FilteredDataView<S,T> implements DataView<T> {
     }
 
     @Override
+    public boolean canGenerateOperations() {
+        throw new UnsupportedOperationException("UnsupportedOperationException on filtered view");
+    }
+
+    @Override
     public Flux<DataSet<T>.Operation> buildOperationFeed(boolean autoAck, boolean filterNonGeneratable) {
         throw new UnsupportedOperationException("UnsupportedOperationException on filtered view");
     }
@@ -182,7 +194,7 @@ class FilteredDataView<S,T> implements DataView<T> {
 
     @Override
     public <T1> DataView<T1> transformedView(Function<T, T1> transformFunction, Class<T1> targetType) {
-        return new FilteredDataView<S,T1>(source, sEntry -> {
+        return new FilteredDataView<S,T1>(source.getName() + "T", source, sEntry -> {
             Entry<T> tEntry = predicateTranform.apply(sEntry);
 
             if (tEntry == null) return null;
@@ -193,7 +205,7 @@ class FilteredDataView<S,T> implements DataView<T> {
 
     @Override
     public DataView<T> filteredView(Predicate<T> acceptPredicate) {
-        return new FilteredDataView<S,T>(source, sEntry -> {
+        return new FilteredDataView<S,T>(source.getName() + "F", source, sEntry -> {
             Entry<T> tEntry = predicateTranform.apply(sEntry);
             if (tEntry == null) return null;
 

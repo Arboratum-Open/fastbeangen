@@ -12,6 +12,8 @@ import java.util.function.Predicate;
  */
 public interface DataView<ENTRY> {
 
+    String getName();
+
     Class<ENTRY> getEntryType();
 
     /**
@@ -29,6 +31,8 @@ public interface DataView<ENTRY> {
     default Flux<DataSet<ENTRY>.Operation> buildOperationFeed(boolean autoAck) {
         return buildOperationFeed(autoAck, true);
     }
+
+    boolean canGenerateOperations();
 
     Flux<DataSet<ENTRY>.Operation> buildOperationFeed(boolean autoAck, boolean filterNonGeneratable);
 
