@@ -43,7 +43,7 @@ public class UnionDataViewTest {
                 .withUpdateGenerator(updateGenerator)
                 .build();
 
-        UnionDataView<DataSetBuilderTest.Pojo> union = new UnionDataView<>(set1, set2);
+        UnionDataView<DataSetBuilderTest.Pojo> union = new UnionDataView<>("test", set1, set2);
 
         final RandomSequence r = new RandomSequence(2);
         for (int i = 0; i < 100; i++) {
@@ -58,7 +58,7 @@ public class UnionDataViewTest {
                 .withUpdateGenerator(updateGenerator)
                 .build();
 
-        union = new UnionDataView<>(set1, set3, set2);
+        union = new UnionDataView<>("test", set1, set3, set2);
         for (int i = 0; i < 1000; i++) {
             Assert.assertNotNull(union.selectOne(r));
         }

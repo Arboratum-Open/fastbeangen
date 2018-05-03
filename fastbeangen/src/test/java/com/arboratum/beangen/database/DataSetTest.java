@@ -107,7 +107,7 @@ public class DataSetTest {
                 return 1;
             }
         };
-        DataSet<Integer> pojo = new DataSet<>(generator, null, new byte[]{1, -3, 2}, 2, updateGenerator,
+        DataSet<Integer> pojo = new DataSet<>("test",generator, null, null, new byte[]{1, -3, 2}, 2, updateGenerator,
                 Arrays.asList(new DataSetBuilder.WeightedUpdateGenerator(1,
                         (previousValue, randomSequence) -> (UpdateOf<Integer>) integer -> integer + 1))
                 , null, null, Schedulers.single(), 0);
@@ -201,7 +201,9 @@ public class DataSetTest {
         };
         DataSet<Pojo2> pojo2DataSet = new DataSet<Pojo2>(
                 "test",
-                opGen, null,
+                opGen,
+                null,
+                null,
                 new byte[]{1, 1, 1, 1},
                 3,
                 build,

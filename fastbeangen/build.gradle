@@ -8,11 +8,17 @@ dependencies {
     compile 'joda-time:joda-time:2.9.9'
     compile 'io.projectreactor:reactor-core:3.0.4.RELEASE'
     compile 'org.roaringbitmap:RoaringBitmap:0.6.66'
+    compile 'ch.qos.logback:logback-classic:1.1.11'
+    compile 'org.slf4j:jcl-over-slf4j:1.7.25'
+    compile 'org.slf4j:jul-to-slf4j:1.7.25'
+    compile 'org.slf4j:log4j-over-slf4j:1.7.25'
 
     testCompile 'io.projectreactor.addons:reactor-test:3.0.4.RELEASE'
 
     testCompile group: 'com.linkedin.paldb', name: 'paldb', version: '1.2.0'
     testCompile group: 'org.xerial.snappy', name: 'snappy-java', version: '1.1.2.6'
+
+
 
 }
 

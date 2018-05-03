@@ -14,7 +14,7 @@ plugins {
 
 subprojects {
     group 'com.arboratum'
-    version '0.2.12'
+    version '0.2.14'
 
     apply plugin: 'java'
     apply plugin: 'idea'
