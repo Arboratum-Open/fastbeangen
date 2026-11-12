@@ -1,0 +1,725 @@
+schema: comet.native.v4
+name: modernize-java-21
+language: en
+phase: archive
+status: done
+state_version: 8
+brief: brief.md
+document_constraints_version: 3
+shape_confirmation_hash: 538740d93d56c48d0dcab58aace65f6aefc4b257832729d9e66f256865d893e5
+spec_changes:
+  - capability: modern-java-build
+    operation: create
+    source: specs/modern-java-build/spec.md
+workspace:
+  isolation: worktree
+  change_branch: comet/modernize-java-21
+  target_branch: master
+  finish: keep
+loop:
+  stage: done
+  goal_cycle: 1
+  iteration: 1
+  attempt: 1
+  retry_epoch: 0
+  failed_iteration_count: 0
+  no_progress_count: 0
+  execution_failure_count: 0
+  previous_unresolved_ids: []
+  next_action: null
+acceptance:
+  - id: A1
+    source: brief.md
+    text: All three modules compile and their applicable existing and added tests
+      pass on actual Java 21 and actual Java 25; produced library bytecode
+      targets Java 21, and the Gradle wrapper/check commands are reproducible
+      and documented.
+    result: passed
+    reason:
+      text: Reused bound java21-build-test-publish and java25-build-test-publish
+        receipts. Independently inspected logs showing actual Temurin 21.0.11
+        and 25.0.5 compilers and matching test executors, with all three modules
+        compiled; the example module has no unit-test sources and is covered by
+        smoke checks. Current report audit confirms 60 core and 6 document
+        tests, zero failures/errors/skips. Root options.release=21 and
+        publication validation for both builds establish Java 21
+        classfiles/variants. Wrapper SHA-256 matches the documented value;
+        distribution URL/checksum and reproducible commands are checked in.
+      truncated: false
+  - id: A2
+    source: brief.md
+    text: The build uses pinned stable compatible dependencies and supported Gradle
+      declarations, resolves from supported repositories without
+      JCenter/Bintray, and does not introduce dynamic/pre-release versions or
+      conceal unresolved dependency limitations.
+    result: passed
+    reason:
+      text: "Inspected root/settings and all three module build files: direct
+        dependency/plugin versions are fixed stable versions, framework
+        transitives use the pinned Boot BOM, resolution uses Maven
+        Central/plugin portal, and modern java-library, toolchain, publishing
+        and dependency declarations replace obsolete configuration. Both
+        complete Runtime builds and POM-only consumers resolve successfully.
+        Retained Commons Math/PalDB age and lack of an upstream-maintenance
+        guarantee are explicitly documented rather than represented as resolved
+        maintenance."
+      truncated: false
+  - id: A3
+    source: brief.md
+    text: Upgrade-sensitive seeded generator/data-set behavior matches recorded
+      historical references; the pseudo-random algorithm is preserved,
+      new-version reproducibility is tested, and every detected difference is
+      either resolved or individually documented with explicit owner acceptance.
+      No test oracle, scenario, size tolerance, or statistical check is weakened
+      to obtain a pass.
+    result: passed
+    reason:
+      text: The original-tests-prng-preserved Runtime check confirms all 27 original
+        test files and RandomSequence source are byte-identical to baseline
+        7cfaf9bfb699f38f02d5cb87cfe81fe162348c47. Independently inspected the
+        baseline-to-candidate source diff, preserved literal dataset sequences
+        and Monte Carlo expectations, eight fixed PRNG/regex/date reference
+        vectors with baseline/capture provenance, and new
+        reproducibility/acknowledgement/update/union tests. These run in the
+        completed Java 21/25 suites without changing original oracles, scenarios
+        or tolerances. The internal null-list/version-only constructor repair
+        restores existing literal expectations; it does not replace the working
+        weighted-update algorithm. No unresolved changed-output exception was
+        detected; finite reference coverage and the historical-wrapper
+        limitation remain explicit.
+      truncated: false
+  - id: A4
+    source: brief.md
+    text: Existing example entry points and DOCX/XLSX generation remain usable after
+      necessary API adaptations; module tests and bounded smoke checks cover the
+      relevant upgrade surfaces without removing existing functions or requiring
+      unbounded generation/external services.
+    result: passed
+    reason:
+      text: "Inspected necessary Jakarta/JPA, OpenCSV, JCommander and Reactor
+        adaptations against the original implementation; existing entry
+        points/functions remain. Reused both bounded-example Runtime receipts
+        covering query, six CUD checkpoints and CSV person/relation/link
+        validation with embedded HSQLDB. Filled the zero-relation SQL coverage
+        gap through verifier-sql-relations-java21: 10 persons per country plus 2
+        relations generated successfully, reporting 22 stored entities. Both
+        runtime suites retain original DOCX/XLSX size tests and add bounded
+        XML/cell-content checks; independent published consumers also generate
+        and inspect both document formats."
+      truncated: false
+  - id: A5
+    source: brief.md
+    text: Local publication preparation produces consumable library/document-module
+      artifacts and valid Maven metadata with the intended coordinates,
+      sources/Javadoc and signing/upload instructions suitable for Maven
+      Central; no remote artifact upload is performed and ordinary checks
+      require no secrets.
+    result: passed
+    reason:
+      text: Inspected local-only Maven publication, optional in-memory signing and
+        guarded Central bundle configuration. Reused both publication/consumer
+        receipts and added verifier-java25-publication-validation for the
+        Java25-produced repository. Both com.arboratum:fastbeangen:0.3.0 and
+        fastbeangen-doc:0.3.0 have validated Java21 binaries/variants, sources,
+        Javadoc, checksums and project/license/developer/SCM POM metadata. The
+        separate consumer enforces local com.arboratum resolution and Maven-POM
+        metadata without project dependencies or Gradle-metadata fallback.
+        Signing, namespace and Portal prerequisites are documented; ordinary
+        checks need no secrets and no remote uploader is configured.
+      truncated: false
+  - id: A6
+    source: brief.md
+    text: CI declares Java 21 and Java 25 build/test jobs; README, changelog, and
+      migration documentation accurately describe supported Java versions,
+      commands, useful API changes, historical-reference coverage and accepted
+      exceptions, and the distinction between publication-ready and actually
+      published.
+    result: passed
+    reason:
+      text: Independently read CI, README, changelog and complete modernization
+        documentation. CI declares Java21/25
+        compilation/check/local-consumption/example jobs with pinned
+        checkout/setup-java actions and read-only contents permission, without
+        publication/secrets. Documentation matches the actual toolchain/release
+        settings, commands, necessary API/scheduler changes, finite historical
+        references and inherited constructor repair. It distinguishes configured
+        remote CI from executed local evidence and unreleased local artifacts
+        from an actually published Central release.
+      truncated: false
+builder_handoff:
+  candidate_id: 83f9881e-e843-476f-aa7a-76120789410b
+  identity_provider: skill-coordinated
+  builder_execution_ref: skill-coordinated:builder:903742fe-ccdd-4662-a82b-35f0561c4569
+  iteration: 1
+  summary:
+    text: "Complete three-module Java21-target modernization: Gradle9.9.1, pinned
+      stable dependencies, selectable real Java21/25 compilers/test/example
+      launchers, compatible Reactor acknowledgements/blocking operations, modern
+      persistence/CLI examples, fixed historical references, bounded smoke
+      checks, local Maven publication/POM-only consumer, CI matrix and
+      unreleased migration documentation. Owner-approved inherited DataSet
+      constructor defect repaired without changing original test scenarios or
+      assertions. Focused checks passed; the attached Runtime plan, not Builder
+      logs, supplies final complete-suite evidence."
+    truncated: false
+  addressed_acceptance_ids:
+    - A1
+    - A2
+    - A3
+    - A4
+    - A5
+    - A6
+  acceptance_review:
+    - id: A1
+      status: implemented-with-evidence
+      evidence:
+        - "build.gradle: JavaLanguageVersion from -PjavaVersion=21|25,
+          release21, test/JavaExec launchers and unchanged heavy scenarios with
+          4GiB heap"
+        - Actual Java21/25 development compilation/compatibility checks and
+          classfile major65 inspection across all three modules
+        - "Latest focused XML: core13 tests and document6 tests, zero
+          failures/skips; final full-suite plan attached"
+      note: All modules and launchers use the selected toolchain; actual Java25 was
+        provisioned and exercised. Full latest-candidate suites on both runtimes
+        are explicitly not claimed already passed.
+    - id: A2
+      status: implemented-with-evidence
+      evidence:
+        - "Root/settings and three module Gradle files: fixed stable versions,
+          supported repositories and modern java-library/application/publishing
+          APIs"
+        - Wrapper JAR SHA256
+          621008afc4f5d59357fcf06ffa644dd5aade5e091bdc363742710445f73cdaf8;
+          distribution SHA256
+          d8a18a7a841dd5df825d35a685fad6f2d7f12ac0c280e57b67c27b4a520ba228
+        - Latest independent Java25 consumer passed with --warning-mode=all
+          after declaring the pinned Foojay resolver, eliminating the observed
+          toolchain-repository deprecation
+      note: Versions include Boot4.1.2, Reactor3.8.8 and modern document libraries.
+        PalDB1.2.0 retention/latest-stable age and updated Snappy are
+        documented; no new upstream maintenance guarantee is claimed.
+    - id: A3
+      status: implemented-with-evidence
+      evidence:
+        - "HistoricalOutputCompatibilityTest and historical-output.tsv: eight
+          fixed pre-upgrade PRNG/regex/date vectors with provenance and
+          preserved negative-ID rejection"
+        - Original-source/dependency comparisons in frozen administrative
+          baseline harness; acknowledgement/union/default-mutable-update
+          compatibility regressions resolved
+        - Original DataSetTest literal operation sequences/statistics unchanged;
+          focused database/historical tests pass; RandomSequence source
+          unmodified
+      note: The inherited internal-constructor NPE was reproduced on baseline and
+        candidate and explicitly approved for repair; structural UPDATE
+        preserves the existing literal scenarios. No output exception, changed
+        PRNG, weakened oracle, omitted scenario or widened tolerance. Runtime
+        checks original-test/PRNG byte identity and the complete suites.
+    - id: A4
+      status: implemented-with-evidence
+      evidence:
+        - "verify-examples.py25 passed: bounded generation, one-minute query,
+          six successful CUD checkpoints, CSV20000 persons/20 relations/47 valid
+          links"
+        - All six Java21 document tests pass, preserving original2% size
+          tolerances and added DOCX XML/XLSX cell-content checks; content checks
+          also exercised on original dependencies and Java25
+        - Existing example entry points retained; managed Hibernate Person
+          references avoid duplicate cascade persistence; schedulers support
+          existing blocking operations
+      note: Embedded HSQLDB checks require no external database; both runtime smoke
+        plans and document suites are included for final verification.
+    - id: A5
+      status: implemented-with-evidence
+      evidence:
+        - Unsigned local publication succeeded for com.arboratum
+          fastbeangen/fastbeangen-doc0.3.0 with binaries, sources and Javadoc
+        - "verify-publication.py passed: coordinates, GPL/developer/SCM
+          metadata, SHA256 checksums, module/library JVM21 variants and
+          classfile65"
+        - Latest independent POM-only consumer passed on actual Java25,
+          generating/inspecting DOCX/XLSX and checking fixed PRNG output
+      note: Root publishing/signing/bundle configuration and docs prepare Central
+        without upload; ordinary checks need no secrets. Real-key signing,
+        namespace authorization and Portal acceptance remain explicit external
+        prerequisites.
+    - id: A6
+      status: implemented-with-evidence
+      evidence:
+        - "CI YAML parsed: Java21/25 matrix, official actions pinned to full
+          immutable SHAs, contents:read and no secrets/release/upload steps"
+        - README, CHANGELOG and docs/modernization.md describe commands, API
+          changes, original-vs-modern-baseline distinction, historical
+          coverage/limits, approved inherited bug repair, local POM consumption
+          and unreleased0.3.0 status
+        - Verification Python AST syntax and README LICENSE link checks passed
+      note: Remote CI is configured but unexecuted. Documentation does not equate
+        finite references with exhaustive compatibility, local artifacts with a
+        published release, or unavailable signing/namespace checks with success.
+  checks:
+    - name:
+        text: Focused core/database compatibility
+        truncated: false
+      result: passed
+      note:
+        text: Latest XML13 tests, zero failures/skips; original DataSet scenarios
+          retained. Baseline/current compatibility regressions were qualified
+          and resolved.
+        truncated: false
+    - name:
+        text: Document compatibility
+        truncated: false
+      result: passed
+      note:
+        text: Latest Java21 XML6 tests, zero failures/skips; size oracles unchanged.
+          Added content comparisons also ran on baseline and Java25 during
+          development.
+        truncated: false
+    - name:
+        text: Bounded examples Java25
+        truncated: false
+      result: passed
+      note:
+        text: Generation/query/CUD/CSV passed, including six CUD checkpoints and
+          CSV20000/20/47.
+        truncated: false
+    - name:
+        text: Local publication and independent consumer
+        truncated: false
+      result: passed
+      note:
+        text: Unsigned core/doc publications and artifact validator passed. Latest
+          POM-only Java25 consumer passed with explicit Foojay resolver and no
+          deprecation warning.
+        truncated: false
+    - name:
+        text: CI/script syntax and documentation link
+        truncated: false
+      result: passed
+      note:
+        text: YAML matrix/action-pin/permissions checks, verification Python AST parsing
+          and LICENSE target passed.
+        truncated: false
+    - name:
+        text: git diff --check
+        truncated: false
+      result: failed
+      note:
+        text: Exit2, all135 findings indentation-with-spaces only against global
+          ~/.gitconfig indent-with-non-tab policy. Existing repository space
+          style retained; no Git configuration, exclusion or control changed; no
+          mass reformat.
+        truncated: false
+    - name:
+        text: Full latest-candidate Java21/25 suites
+        truncated: false
+      result: not-run
+      note:
+        text: Delegated once to the final Runtime plan; partial development checks are
+          not full-suite success.
+        truncated: false
+  checks_truncated: false
+  known_limits:
+    - text: Full latest-candidate suites have not run before handoff; Runtime plan
+        supplies final evidence.
+      truncated: false
+    - text: Original Gradle2.14.1 is not runnable on available Java21; historical
+        comparisons used frozen original sources/dependencies in a modern
+        administrative harness, not a successful original-wrapper run.
+      truncated: false
+    - text: Finite historical reference coverage, no exhaustive identity claim and no
+        accepted generated-output exception.
+      truncated: false
+    - text: PalDB1.2.0 is retained as last stable upstream version; runtime
+        compatibility does not certify upstream maintenance.
+      truncated: false
+    - text: Real-key signing, namespace authorization, Central Portal acceptance and
+        remote CI execution unverified; no
+        upload/commit/push/PR/merge/Archive/cleanup authorized.
+      truncated: false
+    - text: Existing Javadoc missing-comment warnings remain with doclint enabled.
+      truncated: false
+    - text: git diff --check remains failed with135 global-policy indentation
+        findings; source's existing space style retained, failure disclosed, no
+        configuration/exclusion/control weakened.
+      truncated: false
+    - text: Independent CodeGraph preparation refused because the worktree index is
+        not excluded; no repair or parent-index borrowing.
+      truncated: false
+  known_limits_truncated: false
+  review: null
+  submitted_at: 2026-11-11T20:46:58.544Z
+blockers: []
+verification:
+  candidate_id: 83f9881e-e843-476f-aa7a-76120789410b
+  identity_provider: skill-coordinated
+  verifier_execution_ref: skill-coordinated:verifier:bf835e71-50d1-4fd3-b5b5-9b4fb412ba90
+  iteration: 1
+  attempt: 1
+  assurance: skill-coordinated
+  verdict: pass
+  checks:
+    - id: original-tests-prng-preserved
+      name:
+        text: Original test oracles and PRNG source unchanged
+        truncated: false
+      argv_display:
+        - text: -c
+          truncated: false
+        - text: import subprocess as s; from pathlib import Path;
+            base="7cfaf9bfb699f38f02d5cb87cfe81fe162348c47"; paths=[p for p in
+            s.check_output(["git","ls-tree","-r","--name-only",base],text=True).splitlines()
+            if "/src/test/" in p]; assert paths; changed=[p for p in paths if
+            not Path(p).is_file() or
+            Path(p).read_bytes()!=s.check_output(["git","show",base+":"+p])];
+            assert not changed,changed;
+            p="fastbeangen/src/main/java/com/arboratum/beangen/util/RandomSequence.java";
+            assert
+            Path(p).read_bytes()==s.check_output(["git","show",base+":"+p]);
+            print("Original test files unchanged:",len(paths),"; PRNG source
+            unchanged from",base)
+          truncated: false
+      argv_truncated: false
+      cwd_ref: .
+      status: passed
+      exit_code: 0
+      duration_ms: 688
+    - id: java21-build-test-publish
+      name:
+        text: Java21 complete build tests assembly and unsigned local publication
+        truncated: false
+      argv_display:
+        - text: -u
+          truncated: false
+        - text: "[REDACTED]"
+          truncated: false
+        - text: -u
+          truncated: false
+        - text: "[REDACTED]"
+          truncated: false
+        - text: ./gradlew
+          truncated: false
+        - text: --no-daemon
+          truncated: false
+        - text: --console=plain
+          truncated: false
+        - text: --info
+          truncated: false
+        - text: --max-workers=1
+          truncated: false
+        - text: -PjavaVersion=21
+          truncated: false
+        - text: clean
+          truncated: false
+        - text: check
+          truncated: false
+        - text: assemble
+          truncated: false
+        - text: publishAllPublicationsToLocalRepository
+          truncated: false
+      argv_truncated: false
+      cwd_ref: .
+      status: passed
+      exit_code: 0
+      duration_ms: 44834
+    - id: java21-publication-validation
+      name:
+        text: Java21 published artifact and Maven metadata validation
+        truncated: false
+      argv_display:
+        - text: verification/verify-publication.py
+          truncated: false
+      argv_truncated: false
+      cwd_ref: .
+      status: passed
+      exit_code: 0
+      duration_ms: 224
+    - id: java21-publication-consumer
+      name:
+        text: Java21 independent POM-only Maven consumer
+        truncated: false
+      argv_display:
+        - text: --project-dir
+          truncated: false
+        - text: verification/consumer
+          truncated: false
+        - text: --no-daemon
+          truncated: false
+        - text: --console=plain
+          truncated: false
+        - text: --max-workers=1
+          truncated: false
+        - text: -PjavaVersion=21
+          truncated: false
+        - text: run
+          truncated: false
+      argv_truncated: false
+      cwd_ref: .
+      status: passed
+      exit_code: 0
+      duration_ms: 6558
+    - id: java21-bounded-examples
+      name:
+        text: Java21 bounded existing example entry points
+        truncated: false
+      argv_display:
+        - text: verification/verify-examples.py
+          truncated: false
+        - text: "21"
+          truncated: false
+      argv_truncated: false
+      cwd_ref: .
+      status: passed
+      exit_code: 0
+      duration_ms: 84396
+    - id: java25-build-test-publish
+      name:
+        text: Java25 complete build tests assembly and unsigned local publication
+        truncated: false
+      argv_display:
+        - text: -u
+          truncated: false
+        - text: "[REDACTED]"
+          truncated: false
+        - text: -u
+          truncated: false
+        - text: "[REDACTED]"
+          truncated: false
+        - text: ./gradlew
+          truncated: false
+        - text: --no-daemon
+          truncated: false
+        - text: --console=plain
+          truncated: false
+        - text: --info
+          truncated: false
+        - text: --max-workers=1
+          truncated: false
+        - text: -PjavaVersion=25
+          truncated: false
+        - text: clean
+          truncated: false
+        - text: check
+          truncated: false
+        - text: assemble
+          truncated: false
+        - text: publishAllPublicationsToLocalRepository
+          truncated: false
+      argv_truncated: false
+      cwd_ref: .
+      status: passed
+      exit_code: 0
+      duration_ms: 47767
+    - id: java25-publication-consumer
+      name:
+        text: Java25 independent POM-only Maven consumer
+        truncated: false
+      argv_display:
+        - text: --project-dir
+          truncated: false
+        - text: verification/consumer
+          truncated: false
+        - text: --no-daemon
+          truncated: false
+        - text: --console=plain
+          truncated: false
+        - text: --max-workers=1
+          truncated: false
+        - text: -PjavaVersion=25
+          truncated: false
+        - text: run
+          truncated: false
+      argv_truncated: false
+      cwd_ref: .
+      status: passed
+      exit_code: 0
+      duration_ms: 6605
+    - id: java25-bounded-examples
+      name:
+        text: Java25 bounded existing example entry points
+        truncated: false
+      argv_display:
+        - text: verification/verify-examples.py
+          truncated: false
+        - text: "25"
+          truncated: false
+      argv_truncated: false
+      cwd_ref: .
+      status: passed
+      exit_code: 0
+      duration_ms: 109551
+    - id: verifier-source-diff
+      name:
+        text: Independent baseline-to-candidate implementation diff
+        truncated: false
+      argv_display:
+        - text: diff
+          truncated: false
+        - text: 7cfaf9bfb699f38f02d5cb87cfe81fe162348c47
+          truncated: false
+        - text: --
+          truncated: false
+        - text: fastbeangen/src/main
+          truncated: false
+        - text: fastbeangen-doc/src/main
+          truncated: false
+        - text: fastbeangen-example/src
+          truncated: false
+        - text: LICENSE
+          truncated: false
+        - text: .gitignore
+          truncated: false
+      argv_truncated: false
+      cwd_ref: .
+      status: passed
+      exit_code: 0
+      duration_ms: 26
+    - id: verifier-change-inventory
+      name:
+        text: Independent changed-file and historical harness inventory
+        truncated: false
+      argv_display:
+        - text: -c
+          truncated: false
+        - text: |
+            import subprocess as s; from pathlib import Path; print(s.check_output(['git','diff','--stat','7cfaf9bfb699f38f02d5cb87cfe81fe162348c47'],text=True)); print(s.check_output(['git','ls-files','--others','--exclude-standard'],text=True)); print('Reference artifacts:'); roots=[Path('.comet/runtime'),Path('/tmp')];
+            for root in roots:
+             for p in root.glob('*'):
+              if any(k in p.name.lower() for k in ('baseline','histor','fastbean','modern')): print(p)
+          truncated: false
+      argv_truncated: false
+      cwd_ref: .
+      status: passed
+      exit_code: 0
+      duration_ms: 195
+    - id: verifier-sql-relations-java21
+      name:
+        text: Bounded SQL generation with nonzero relations on Java21
+        truncated: false
+      argv_display:
+        - text: --no-daemon
+          truncated: false
+        - text: --console=plain
+          truncated: false
+        - text: --max-workers=1
+          truncated: false
+        - text: -PjavaVersion=21
+          truncated: false
+        - text: :fastbeangen-example:runGeneration
+          truncated: false
+        - text: --args=--persons 10 --relations 2 generate
+          truncated: false
+      argv_truncated: false
+      cwd_ref: .
+      status: passed
+      exit_code: 0
+      duration_ms: 11634
+    - id: verifier-java25-publication-validation
+      name:
+        text: Validate Java25-produced local binaries and metadata
+        truncated: false
+      argv_display:
+        - text: verification/verify-publication.py
+          truncated: false
+      argv_truncated: false
+      cwd_ref: .
+      status: passed
+      exit_code: 0
+      duration_ms: 247
+    - id: verifier-report-wrapper-audit
+      name:
+        text: Audit current test reports and wrapper integrity
+        truncated: false
+      argv_display:
+        - text: -c
+          truncated: false
+        - text: |
+            from pathlib import Path; import xml.etree.ElementTree as E, hashlib; p=Path('gradle/wrapper/gradle-wrapper.jar'); actual=hashlib.sha256(p.read_bytes()).hexdigest(); assert actual=='621008afc4f5d59357fcf06ffa644dd5aade5e091bdc363742710445f73cdaf8',actual; print('Wrapper SHA256:',actual);
+            for module in ['fastbeangen','fastbeangen-doc']:
+             reports=list(Path(module+'/build/test-results/test').glob('TEST-*.xml')); assert reports; totals={k:0 for k in ['tests','skipped','failures','errors']};
+             for report in reports:
+              r=E.parse(report).getroot()
+              for k in totals: totals[k]+=int(r.attrib[k])
+             print(module,len(reports),'suites',totals); assert totals['tests']>0 and totals['skipped']==totals['failures']==totals['errors']==0
+          truncated: false
+      argv_truncated: false
+      cwd_ref: .
+      status: passed
+      exit_code: 0
+      duration_ms: 95
+  summary:
+    text: Independently assessed A1-A6 for unchanged candidate
+      83f9881e-e843-476f-aa7a-76120789410b; all six pass within the confirmed
+      scope. Reused eight candidate-bound Runtime receipts and requested only
+      missing inspection/coverage checks, all of which passed, including
+      nonzero-relation SQL generation and Java25 publication validation. No
+      duplicate full-suite run, source edits, nested agents or remote delivery.
+      Skill-coordinated verification retains the stated limitations and requires
+      the owner's result decision through Native.
+    truncated: false
+  risks:
+    - text: Historical coverage is finite, not proof of identity across every seed,
+        generator configuration, locale, asynchronous interleaving or Office/CSV
+        byte serialization. The original Gradle 2.14.1 runtime was not executed
+        successfully; documented reference capture used frozen original
+        sources/dependencies in a modern administrative harness, not a passing
+        historical-wrapper build.
+      truncated: false
+    - text: Real-key signing, com.arboratum namespace authorization, Central Portal
+        acceptance and remote CI execution remain unverified external release
+        prerequisites. No artifact upload, commit, push, PR, merge, Archive or
+        cleanup was performed by this Verifier.
+      truncated: false
+    - text: Commons Math and test-only PalDB retain their available stable versions;
+        compatibility checks do not certify active upstream maintenance or
+        constitute a comprehensive vulnerability audit.
+      truncated: false
+    - text: Existing Javadoc missing-comment warnings remain with validation enabled.
+        The published document consumer also emits a Log4j missing-provider
+        warning, although its core and DOCX/XLSX output checks pass.
+      truncated: false
+    - text: Builder disclosed git diff --check failure with 135 global
+        indent-with-non-tab policy findings; this is not reported as passed.
+        Source inspection retains the repository's existing space indentation
+        and shows no suppression/configuration change. It is not a confirmed
+        functional acceptance requirement.
+      truncated: false
+    - text: Builder disclosed that CodeGraph preparation was refused because the
+        worktree index was not excluded. No CodeGraph result or parent-index
+        borrowing is claimed; this verification used direct file/diff inspection
+        and Native-managed checks.
+      truncated: false
+  risks_truncated: false
+  completed_at: 2026-11-11T20:55:55.632Z
+history:
+  - goal_cycle: 1
+    iteration: 1
+    attempt: 1
+    outcome: pass
+    unresolved_ids: []
+    summary:
+      text: Independently assessed A1-A6 for unchanged candidate
+        83f9881e-e843-476f-aa7a-76120789410b; all six pass within the confirmed
+        scope. Reused eight candidate-bound Runtime receipts and requested only
+        missing inspection/coverage checks, all of which passed, including
+        nonzero-relation SQL generation and Java25 publication validation. No
+        duplicate full-suite run, source edits, nested agents or remote
+        delivery. Skill-coordinated verification retains the stated limitations
+        and requires the owner's result decision through Native.
+      truncated: false
+    completed_at: 2026-11-11T20:55:55.632Z
+history_overflow:
+  dropped_entries: 0
+  first_dropped_at: null
+  last_dropped_at: null
+  outcome_counts:
+    pass: 0
+    fail: 0
+    blocked: 0
+    execution-error: 0
+    recovery: 0
+verification_result: pass
+verification_report: verification.md
+archived: true
+created_at: 2026-11-10T07:53:27.631Z
