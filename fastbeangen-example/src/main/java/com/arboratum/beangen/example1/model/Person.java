@@ -2,7 +2,7 @@ package com.arboratum.beangen.example1.model;
 
 import com.arboratum.beangen.extended.Identity;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.util.List;
 
 /**

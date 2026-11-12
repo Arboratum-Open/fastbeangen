@@ -7,14 +7,17 @@ import org.roaringbitmap.RoaringBitmap;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.SynchronousSink;
-import reactor.core.publisher.TopicProcessor;
+import reactor.core.publisher.Sinks;
 import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.Callable;
+import java.util.concurrent.locks.LockSupport;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -253,7 +256,14 @@ public class DataSet<ENTRY> implements DataView<ENTRY> {
         }
 
         public void ack() {
-            operationAcks.onNext(this);
+            synchronized (operationAcks) {
+                Sinks.EmitResult result;
+                // Preserve bounded, blocking acknowledgements rather than dropping on overflow.
+                while ((result = operationAcks.tryEmitNext(this)) == Sinks.EmitResult.FAIL_OVERFLOW) {
+                    LockSupport.parkNanos(1_000_000);
+                }
+                result.orThrow();
+            }
         }
 
         private void synchronousAck() {
@@ -297,7 +307,8 @@ public class DataSet<ENTRY> implements DataView<ENTRY> {
         }
     }
 
-    private final TopicProcessor<Operation> operationAcks = TopicProcessor.share("Operation-Acks", 8);
+    private final Sinks.Many<Operation> operationAcks = Sinks.many().unicast()
+            .onBackpressureBuffer(new ArrayBlockingQueue<Operation>(8));
 
     private final Generator<OpCode> operationGenerator;
 
@@ -337,7 +348,7 @@ public class DataSet<ENTRY> implements DataView<ENTRY> {
     }
 
     DataSet(Generator<OpCode> operationGenerator) {
-        this(null, operationGenerator, null, null, new byte[0], -1, null, null, null, null, Schedulers.single(), 0);
+        this(null, operationGenerator, null, null, new byte[0], -1, null, Collections.emptyList(), null, null, Schedulers.single(), 0);
     }
 
     @Override
@@ -387,7 +398,9 @@ public class DataSet<ENTRY> implements DataView<ENTRY> {
         if (!canGenerateOperations()) throw new IllegalStateException("Cannot build a feed on a DataSet "+name+" for which no operationGenerator was configured");
         if (feedBuilt) throw new IllegalStateException("A feed can be built only once");
         feedBuilt =  true;
-        if (!autoAck) operationAcks.subscribe(Operation::synchronousAck);  // this guaranty to have a single thread for this
+        if (!autoAck) operationAcks.asFlux()
+                .publishOn(Schedulers.newSingle("Operation-Acks"), 1)
+                .subscribe(Operation::synchronousAck);
 
         Flux<Operation> operationFlux = Flux.generate(new Callable<DataSetFutureState>() {
                                                           @Override
@@ -429,6 +442,14 @@ public class DataSet<ENTRY> implements DataView<ENTRY> {
                                 break;
                             }
                             case UPDATE: {
+                                // The internal Monte Carlo dataset tracks versions without generating values.
+                                if (entryGenerator == null && numUpdateGenerators == 0) {
+                                    int select = state.existing.select(randomSequence.nextInt(state.size));
+                                    byte version = (byte) (state.versions[select] + 1);
+                                    state.versions[select] = version;
+                                    synchronousSink.next(new Operation(id, new EntryImpl(select, version)));
+                                    break;
+                                }
                                 int nextUpdateWanted = updateGeneratorsIndexGenerator.generate(randomSequence);
 
                                 // search random existing entry on which this update can apply
