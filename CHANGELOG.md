@@ -3,6 +3,7 @@
 
 ## v0.3.0 (unreleased)
 
+* Relicense first-party code and bundled resources under LGPL-3.0-only; retain GPL v3 as incorporated base terms in COPYING and preserve third-party notices and previously granted GPL rights. Include both texts in first-party JARs and verify exact license metadata/content.
 * Require Java 21; target Java 21 bytecode and verify compilation/runtime behavior on Java 21 and 25.
 * Upgrade the official Gradle wrapper, build plugins and dependencies across core, examples and document generation; remove JCenter/Bintray build/publication assumptions.
 * Adapt Reactor acknowledgements/schedulers, Jakarta persistence, Hibernate and OpenCSV while retaining existing example entry points and test oracles.

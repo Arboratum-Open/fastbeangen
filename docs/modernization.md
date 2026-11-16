@@ -80,16 +80,17 @@ The verifier runs the existing entry points with embedded HSQLDB: 10 initial per
 
 ## Publication preparation
 
-The intended coordinates remain `com.arboratum:fastbeangen:0.3.0` and `com.arboratum:fastbeangen-doc:0.3.0`. **0.3.0 is unreleased, not remotely available as a result of this change.** The GPL version 3 license is unchanged.
+The intended coordinates remain `com.arboratum:fastbeangen:0.3.0` and `com.arboratum:fastbeangen-doc:0.3.0`. **0.3.0 is unreleased, not remotely available as a result of this change.** The current first-party grant is **LGPL-3.0-only**, superseding the modernization's former GPL-only status. Both the LGPL text in [LICENSE](../LICENSE) and its incorporated GPL v3 terms in [COPYING](../COPYING) are distributed. Third-party notices and previously granted GPL rights remain unchanged; see the [license and distribution conditions](../README.md#license).
 
 ```sh
-./gradlew --no-daemon publishAllPublicationsToLocalRepository
+python3 -m unittest discover -s verification -p 'test_publication_licenses.py'
+./gradlew --no-daemon --max-workers=1 assemble publishAllPublicationsToLocalRepository
 python3 verification/verify-publication.py
 ./gradlew --project-dir verification/consumer --no-daemon -PjavaVersion=21 run
 ./gradlew --project-dir verification/consumer --no-daemon -PjavaVersion=25 run
 ```
 
-The build only configures a local Maven repository at `build/repository`. It produces core/document binaries, sources, Javadoc, POMs, Gradle module metadata and checksums. The publication verifier checks artifact contents, Java 21 classfile/variant targets, SHA-256 values, coordinates and license/developer/SCM metadata. The separate consumer forces the `com.arboratum` group to resolve locally, then compiles/runs against published dependencies and generates readable DOCX/XLSX content. It explicitly reads Maven POM metadata instead of relying on Gradle metadata redirection. It does not use a project dependency or silently fall back to a remote FastBeanGen release.
+The build only configures a local Maven repository at `build/repository`. It produces core/document binaries, sources, Javadoc, POMs, Gradle module metadata and checksums. The publication verifier checks artifact contents, Java 21 classfile/variant targets, SHA-256 values, coordinates and license/developer/SCM metadata. It requires the exact LGPL-3.0-only POM grant and exact LGPL/GPL texts in the repository and every published binary/sources/Javadoc JAR, as well as the example JARs built by `assemble`. Its focused self-checks reject wrong grants/URLs, multiple licenses, and missing, modified or duplicated legal texts. The separate consumer forces the `com.arboratum` group to resolve locally, then compiles/runs against published dependencies and generates readable DOCX/XLSX content. It explicitly reads Maven POM metadata instead of relying on Gradle metadata redirection. It does not use a project dependency or silently fall back to a remote FastBeanGen release.
 
 Ordinary checks require no signing credentials. If `SIGNING_KEY` is injected, Gradle uses that ASCII-armored private key in memory, with optional `SIGNING_PASSWORD`, to sign the publications. Do not commit keys or expose them in command history/logs. To explicitly validate unsigned local output in an environment that already has signing variables, use `env -u SIGNING_KEY -u SIGNING_PASSWORD ./gradlew publishAllPublicationsToLocalRepository` on Unix.
 
