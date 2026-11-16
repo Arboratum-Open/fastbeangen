@@ -1,15 +1,14 @@
 package com.arboratum.beangen.example1;
 
-import au.com.bytecode.opencsv.CSVWriter;
-import au.com.bytecode.opencsv.ResultSetHelper;
-import au.com.bytecode.opencsv.ResultSetHelperService;
+import com.opencsv.CSVWriter;
+import com.opencsv.ResultSetHelper;
+import com.opencsv.ResultSetHelperService;
 import com.arboratum.beangen.database.DataView;
 import com.arboratum.beangen.database.Entry;
 import com.arboratum.beangen.example1.model.Person;
 import com.arboratum.beangen.example1.model.Relation;
 import com.beust.jcommander.JCommander;
 import com.google.common.base.Stopwatch;
-import com.google.common.io.Closeables;
 import org.apache.commons.pool2.BasePooledObjectFactory;
 import org.apache.commons.pool2.PooledObject;
 import org.apache.commons.pool2.impl.DefaultPooledObject;
@@ -17,6 +16,7 @@ import org.apache.commons.pool2.impl.SoftReferenceObjectPool;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
+import org.hibernate.cfg.Configuration;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
@@ -24,8 +24,6 @@ import org.springframework.jdbc.datasource.SingleConnectionDataSource;
 import org.springframework.jdbc.support.DatabaseMetaDataCallback;
 import org.springframework.jdbc.support.JdbcUtils;
 import org.springframework.jdbc.support.MetaDataAccessException;
-import org.springframework.orm.hibernate4.HibernateTemplate;
-import org.springframework.orm.hibernate4.LocalSessionFactoryBean;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
 import reactor.core.publisher.Mono;
@@ -45,6 +43,7 @@ import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 /**
  * This is example show how generate a test csv database using hibernate and H2
@@ -97,7 +96,6 @@ public class DatabaseGeneratorAsCSVTest {
         private final DriverManagerDataSource dataSource;
         private final JdbcTemplate jdbcTemplate;
         private final SessionFactory sessionFactory;
-        private final HibernateTemplate hibernateTemplate;
 
 
 
@@ -114,11 +112,8 @@ public class DatabaseGeneratorAsCSVTest {
 
 
 
-            LocalSessionFactoryBean sessionFactoryBean = new LocalSessionFactoryBean();
-            sessionFactoryBean.setAnnotatedClasses(Person.class, Relation.class);
-            sessionFactoryBean.setDataSource(dataSource);
-
             final Properties hibernateProperties = new Properties();
+            hibernateProperties.put("hibernate.connection.datasource", dataSource);
             hibernateProperties.put("hibernate.dialect", "org.hibernate.dialect.HSQLDialect");
             hibernateProperties.put("hibernate.hbm2ddl.auto", "create");
             hibernateProperties.put("hibernate.show_sql", "false");
@@ -126,17 +121,16 @@ public class DatabaseGeneratorAsCSVTest {
             hibernateProperties.put("hibernate.bytecode.use_reflection_optimizer", "true");
             hibernateProperties.put("hibernate.cache.use_second_level_cache", "false");
 
-            sessionFactoryBean.setHibernateProperties(hibernateProperties);
-
-            sessionFactoryBean.afterPropertiesSet();
-
-            sessionFactory = sessionFactoryBean.getObject();
-            hibernateTemplate = new HibernateTemplate(sessionFactory);
+            sessionFactory = new Configuration()
+                    .addAnnotatedClass(Person.class)
+                    .addAnnotatedClass(Relation.class)
+                    .setProperties(hibernateProperties)
+                    .buildSessionFactory();
 
         }
 
         public void close() throws IOException {
-            Closeables.close(sessionFactory, true);
+            sessionFactory.close();
             jdbcTemplate.execute("SHUTDOWN");
         }
 
@@ -184,10 +178,6 @@ public class DatabaseGeneratorAsCSVTest {
             return this.sessionFactory;
         }
 
-        public HibernateTemplate getHibernateTemplate() {
-            return this.hibernateTemplate;
-        }
-
         public boolean equals(Object o) {
             if (o == this) return true;
             if (!(o instanceof TemporaryDatabase)) return false;
@@ -218,7 +208,7 @@ public class DatabaseGeneratorAsCSVTest {
 
     public void run(String[] args)  {
         final ComplexDatabase base = new ComplexDatabase();
-        JCommander jCommander = new JCommander(base);
+        JCommander jCommander = JCommander.newBuilder().addObject(base).build();
         try {
             jCommander.parse(args);
         } catch (Exception e) {
@@ -239,15 +229,15 @@ public class DatabaseGeneratorAsCSVTest {
         final Flux personEntryFlux = persons.traverseDataSet(false);
         Flux<TemporaryDatabase> personDbFlux =
                 bufferInMemorySQLDbUsingHibernate(personEntryFlux)
-                .subscribeOn(Schedulers.newSingle("persons-to-db"));
+                .subscribeOn(Schedulers.boundedElastic());
 
         final Flux relationEntryFlux = relations.traverseDataSet(false);
         final Flux<TemporaryDatabase> relationsDbFlux =
                 bufferInMemorySQLDbUsingHibernate(relationEntryFlux)
-                .subscribeOn(Schedulers.newSingle("relations-to-db"));
+                .subscribeOn(Schedulers.boundedElastic());
 
         Flux<TemporaryDatabase> temporaryDatabaseFlux = Flux.merge(4, personDbFlux, relationsDbFlux)
-                .publishOn(Schedulers.newSingle("dump-to-csv"), 8);
+                .publishOn(Schedulers.boundedElastic(), 8);
 
 
         final Flux<Tuple2<String, String[]>> rows = dumpAllRows(temporaryDatabaseFlux);
@@ -287,7 +277,7 @@ public class DatabaseGeneratorAsCSVTest {
                                 return flux.getT1()
                                         .map(strings -> { csvWriter.writeNext(strings); return true; })
                                         .count().map(c -> Tuples.of(fileName, c))
-                                        .doOnTerminate((keyCount, throwable) -> {
+                                        .doOnTerminate(() -> {
                                             try {
                                                 csvWriter.close();
                                             } catch (IOException e) {
@@ -358,7 +348,13 @@ public class DatabaseGeneratorAsCSVTest {
 
                     for (int i = 0, peopleBlockSize = peopleBlock.size(); i < peopleBlockSize; i++) {
                         Entry e = peopleBlock.get(i);
-                        session.persist(e.lastVersion().block());
+                        Object value = e.lastVersion().block();
+                        if (value instanceof Relation relation) {
+                            relation.setPersons(relation.getPersons().stream()
+                                    .map(person -> session.getReference(Person.class, person.getId()))
+                                    .collect(Collectors.toList()));
+                        }
+                        session.persist(value);
                         if (i % 50 == 0) {
                             session.flush();
                             session.clear();

@@ -24,7 +24,7 @@ import reactor.util.function.Tuple2;
 import reactor.util.function.Tuple3;
 import reactor.util.function.Tuples;
 
-import javax.persistence.EntityManagerFactory;
+import jakarta.persistence.EntityManagerFactory;
 import java.io.*;
 import java.time.Duration;
 import java.util.Arrays;
@@ -67,7 +67,7 @@ public class SimpleGenAndQueryTest {
 
     public void run(String[] args) {
         final ComplexDatabase base = new ComplexDatabase();
-        JCommander jCommander = new JCommander(base);
+        JCommander jCommander = JCommander.newBuilder().addObject(base).build();
         try {
             jCommander.parseWithoutValidation(Arrays.copyOf(args, args.length-1));
         } catch (Exception e) {

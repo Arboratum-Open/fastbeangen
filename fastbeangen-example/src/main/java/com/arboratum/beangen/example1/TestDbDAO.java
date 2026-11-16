@@ -2,12 +2,11 @@ package com.arboratum.beangen.example1;
 
 import com.arboratum.beangen.example1.model.Identifiable;
 import com.arboratum.beangen.example1.model.Person;
-import org.hibernate.Session;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import java.util.List;
 import java.util.LongSummaryStatistics;
 
@@ -24,9 +23,8 @@ public class TestDbDAO {
 
     public <E extends Identifiable> LongSummaryStatistics store(List<E> element) {
 
-        final Session delegate = (Session) entityManager.getDelegate();
         for (E p : element) {
-            delegate.save(p);
+            entityManager.persist(p);
         }
         entityManager.flush();
         entityManager.clear();
@@ -35,7 +33,7 @@ public class TestDbDAO {
 
     }
 
-    @javax.transaction.Transactional(value = javax.transaction.Transactional.TxType.NOT_SUPPORTED)
+    @jakarta.transaction.Transactional(value = jakarta.transaction.Transactional.TxType.NOT_SUPPORTED)
     public Person load(long id) {
         try {
             return (Person) entityManager.createQuery("select p from Person p  where p.id = :id").setParameter("id", id).getSingleResult();
@@ -45,19 +43,16 @@ public class TestDbDAO {
     }
 
     public void insert(Person person) {
-        final Session delegate = (Session) entityManager.getDelegate();
-        delegate.save(person);
+        entityManager.persist(person);
 
     }
 
     public void delete(Person person) {
-        final Session delegate = (Session) entityManager.getDelegate();
-        delegate.createSQLQuery("delete from Person where id = :id")
-                .setLong("id", person.getId()).executeUpdate();
+        entityManager.createNativeQuery("delete from Person where id = :id")
+                .setParameter("id", person.getId()).executeUpdate();
     }
 
     public void update(Person person) {
-        final Session delegate = (Session) entityManager.getDelegate();
-        delegate.saveOrUpdate(person);
+        entityManager.merge(person);
     }
 }

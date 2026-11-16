@@ -1,126 +1,107 @@
-buildscript {
-    repositories {
-        jcenter()
-        mavenCentral()
-    }
-    dependencies {
-        classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.7.3'
-    }
-}
-
 plugins {
-    id "se.bjurr.gitchangelog.git-changelog-gradle-plugin" version "1.40"
+    id 'org.springframework.boot' version '4.1.2' apply false
+    id 'se.bjurr.gitchangelog.git-changelog-gradle-plugin' version '3.4.2'
 }
 
 subprojects {
-    group 'com.arboratum'
-    version '0.2.14'
+    group = 'com.arboratum'
+    version = '0.3.0'
+    apply plugin: 'java-library'
 
-    apply plugin: 'java'
-    apply plugin: 'idea'
+    repositories { mavenCentral() }
 
-    sourceCompatibility = 1.8
-
-    repositories {
-        jcenter()
+    def buildJavaVersion = JavaLanguageVersion.of(providers.gradleProperty('javaVersion').getOrElse('21').toInteger())
+    java {
+        toolchain { languageVersion = buildJavaVersion }
     }
-
+    tasks.withType(JavaCompile).configureEach {
+        options.release = 21
+        options.encoding = 'UTF-8'
+    }
     dependencies {
-        testCompile group: 'junit', name: 'junit', version: '4.12'
-        testCompile group: 'org.hamcrest', name: 'hamcrest-library', version: '1.3'
+        testImplementation 'junit:junit:4.13.2'
+        testImplementation 'org.hamcrest:hamcrest:3.0'
+    }
+    tasks.withType(Test).configureEach {
+        useJUnit()
+        javaLauncher = javaToolchains.launcherFor {
+            languageVersion = buildJavaVersion
+        }
+        maxHeapSize = '4g'
+        workingDir = layout.buildDirectory.dir('test-work').get().asFile
+        doFirst { workingDir.mkdirs() }
+    }
+    tasks.withType(JavaExec).configureEach {
+        javaLauncher = javaToolchains.launcherFor { languageVersion = buildJavaVersion }
     }
 }
 
-configure(subprojects.findAll {it.name != 'fastbeangen-example'}) {
-
-    apply plugin: 'com.jfrog.bintray'
+configure(subprojects.findAll { it.name != 'fastbeangen-example' }) {
     apply plugin: 'maven-publish'
-
-
-    // custom tasks for creating source/javadoc jars
-    task sourcesJar(type: Jar, dependsOn: classes) {
-        classifier = 'sources'
-        from sourceSets.main.allSource
+    apply plugin: 'signing'
+    java {
+        withSourcesJar()
+        withJavadocJar()
     }
-
-    task javadocJar(type: Jar, dependsOn: javadoc) {
-        classifier = 'javadoc'
-        from javadoc.destinationDir
-    }
-
-    artifacts {
-        archives sourcesJar, javadocJar
-    }
-
-    def pomConfig = {
-        licenses {
-            license {
-                name "GNU General Public License, Version 3"
-                url "http://www.gnu.org/licenses/gpl-3.0.html"
-                distribution "manual"
-            }
-        }
-        developers {
-            developer {
-                id "gpicron"
-                name "Geoffrey Picron"
-                email "geoffrey.picron@arboratum.com"
-            }
-        }
-        scm {
-            url 'https://github.com/Arboratum-Open/fastbeangen.git'
-        }
-    }
-
     publishing {
         publications {
-            MyPublication(MavenPublication) {
+            mavenJava(MavenPublication) {
                 from components.java
-                artifact sourcesJar
-                artifact javadocJar
-                groupId project.group
-                artifactId project.name
-                version project.version
-                pom.withXml {
-                    def root = asNode()
-                    root.appendNode('description', 'FastBeanGen is an Idempotent Random bean generator')
-                    root.appendNode('name', 'FastBeanGen - ' + project.name)
-                    root.appendNode('url', 'https://github.com/Arboratum-Open/fastbeangen.git')
-                    root.children().last() + pomConfig
+                pom {
+                    name = "FastBeanGen - ${project.name}"
+                    description = 'FastBeanGen is an idempotent random bean generator'
+                    url = 'https://github.com/Arboratum-Open/fastbeangen'
+                    licenses {
+                        license {
+                            name = 'GNU General Public License, Version 3'
+                            url = 'https://www.gnu.org/licenses/gpl-3.0.html'
+                        }
+                    }
+                    developers {
+                        developer {
+                            id = 'gpicron'
+                            name = 'Geoffrey Picron'
+                            email = 'geoffrey.picron@arboratum.com'
+                        }
+                    }
+                    scm {
+                        connection = 'scm:git:https://github.com/Arboratum-Open/fastbeangen.git'
+                        developerConnection = 'scm:git:ssh://git@github.com/Arboratum-Open/fastbeangen.git'
+                        url = 'https://github.com/Arboratum-Open/fastbeangen'
+                    }
                 }
             }
         }
-    }
-
-
-
-    bintray {
-        user = project.hasProperty('bintrayUser') ? project.property('bintrayUser') : System.getenv('BINTRAY_USER')
-        key = project.hasProperty('bintrayApiKey') ? project.property('bintrayApiKey') : System.getenv('BINTRAY_API_KEY')
-        publications = ['MyPublication']
-        pkg {
-            repo = 'public'
-            name = 'fastbeangen'
-
-            userOrg = 'arboratum-open'
-            licenses = ['GPL-3.0']
-            vcsUrl = 'https://github.com/Arboratum-Open/fastbeangen.git'
-            //labels = ['gear', 'gore', 'gorilla']
-            publicDownloadNumbers = true
-            //attributes= ['a': ['ay1', 'ay2'], 'b': ['bee'], c: 'cee'] //Optional package-level attributes
-            version {
-                name = project.version
-                desc = 'FastBeanGen library version ' +  project.version
-                released  = new Date()
-                vcsTag = 'v' + project.version
+        repositories {
+            maven {
+                name = 'Local'
+                url = rootProject.layout.buildDirectory.dir('repository')
             }
-
         }
     }
-
+    signing {
+        def key = providers.environmentVariable('SIGNING_KEY')
+        if (key.present) {
+            useInMemoryPgpKeys(key.get(), providers.environmentVariable('SIGNING_PASSWORD').getOrElse(''))
+            sign publishing.publications.mavenJava
+        }
+    }
 }
 
+tasks.register('bundleCentral', Zip) {
+    dependsOn ':fastbeangen:publishAllPublicationsToLocalRepository', ':fastbeangen-doc:publishAllPublicationsToLocalRepository'
+    archiveFileName = 'fastbeangen-central.zip'
+    destinationDirectory = layout.buildDirectory.dir('distributions')
+    from(layout.buildDirectory.dir('repository')) {
+        include "com/arboratum/*/${project(':fastbeangen').version}/**"
+    }
+    doFirst {
+        if (!providers.environmentVariable('SIGNING_KEY').present) {
+            throw new GradleException('SIGNING_KEY is required for a signed Central bundle; local publication checks do not need it.')
+        }
+    }
+}
 
-task generateChangelog(type: se.bjurr.gitchangelog.plugin.gradle.GitChangelogTask) {
-    filePath = "CHANGELOG_tmp.md";
+tasks.register('generateChangelog', se.bjurr.gitchangelog.plugin.gradle.GitChangelogTask) {
+    filePath = 'CHANGELOG_tmp.md'
 }

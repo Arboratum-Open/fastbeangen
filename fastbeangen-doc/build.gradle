@@ -1,8 +1,8 @@
 dependencies {
-    compile project(":fastbeangen")
-    compile group: 'fr.opensagres.xdocreport', name: 'fr.opensagres.xdocreport.document', version: '2.0.0'
-    compile group: 'fr.opensagres.xdocreport', name: 'fr.opensagres.xdocreport.template.velocity', version: '2.0.0'
-    compile group: 'fr.opensagres.xdocreport', name: 'fr.opensagres.xdocreport.document.docx', version: '2.0.0'
-    compile 'org.jxls:jxls:2.4.0'
-    compile 'org.jxls:jxls-poi:1.0.12'
+    api project(':fastbeangen')
+    implementation 'fr.opensagres.xdocreport:fr.opensagres.xdocreport.document:2.2.0'
+    implementation 'fr.opensagres.xdocreport:fr.opensagres.xdocreport.template.velocity:2.2.0'
+    implementation 'fr.opensagres.xdocreport:fr.opensagres.xdocreport.document.docx:2.2.0'
+    implementation 'org.jxls:jxls:3.2.0'
+    implementation 'org.jxls:jxls-poi:3.2.0'
 }

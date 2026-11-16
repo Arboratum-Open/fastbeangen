@@ -1,0 +1,28 @@
+plugins { id 'application' }
+
+def javaVersion = JavaLanguageVersion.of(providers.gradleProperty('javaVersion').getOrElse('21').toInteger())
+java { toolchain { languageVersion = javaVersion } }
+tasks.withType(JavaCompile).configureEach { options.release = 21 }
+
+repositories {
+    exclusiveContent {
+        forRepository {
+            maven {
+                url = uri('../../build/repository')
+                metadataSources { mavenPom(); ignoreGradleMetadataRedirection() }
+            }
+        }
+        filter { includeGroup 'com.arboratum' }
+    }
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'com.arboratum:fastbeangen:0.3.0'
+    implementation 'com.arboratum:fastbeangen-doc:0.3.0'
+}
+application { mainClass = 'PublicationSmoke' }
+tasks.named('run', JavaExec) {
+    javaLauncher = javaToolchains.launcherFor { languageVersion = javaVersion }
+    args javaVersion.toString()
+}

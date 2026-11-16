@@ -3,8 +3,10 @@ package com.arboratum.beangen.database;
 import com.arboratum.beangen.Generator;
 import com.arboratum.beangen.util.RandomSequence;
 import com.arboratum.beangen.util.ReflectionUtils;
+import reactor.core.Exceptions;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.SynchronousSink;
+import reactor.core.scheduler.Schedulers;
 
 import java.util.Arrays;
 import java.util.BitSet;
@@ -149,7 +151,7 @@ class UnionDataView<T> implements DataView<T> {
 
                     fluxSink.next(next);
                 } catch (Exception e) {
-                    if (e instanceof IllegalStateException) { // caused when we stop consuming
+                    if (Exceptions.isCancel(e)) { // caused when we stop consuming
                         fluxSink.complete();
                     } else {
                         fluxSink.error(e);
@@ -157,7 +159,7 @@ class UnionDataView<T> implements DataView<T> {
 
                 }
             }
-        });
+        }).subscribeOn(Schedulers.boundedElastic());
     }
 
     @Override

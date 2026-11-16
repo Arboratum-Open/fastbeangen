@@ -48,7 +48,7 @@ public strictfp class DataSetBuilder<T> {
     private List<WeightedUpdateGenerator<T>> updateGenerators = new ArrayList<>();
     private List<DataSet.CreateTrigger<T>> createTriggers = new ArrayList<>();
     private List<DataSet.UpdateTrigger<T>> updateTriggers = new ArrayList<>();
-    private Scheduler scheduler = Schedulers.single();
+    private Scheduler scheduler = Schedulers.boundedElastic();
     private Predicate<T> creationCheck;
     private Predicate<T> deletionCheck;
     private String name;

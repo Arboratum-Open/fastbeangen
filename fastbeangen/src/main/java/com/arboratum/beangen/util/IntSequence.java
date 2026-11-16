@@ -39,7 +39,7 @@ public class IntSequence {
 
     /**
      * Returns the <code>char</code> value at the specified index.  An index ranges from zero
-     * to <tt>length() - 1</tt>.  The first <code>char</code> value of the sequence is at
+     * to {@code length() - 1}.  The first <code>char</code> value of the sequence is at
      * index zero, the next at index one, and so on, as for array
      * indexing.
      *
@@ -52,8 +52,8 @@ public class IntSequence {
      * @return  the specified <code>char</code> value
      *
      * @throws  IndexOutOfBoundsException
-     *          if the <tt>index</tt> argument is negative or not less than
-     *          <tt>length()</tt>
+     *          if the {@code index} argument is negative or not less than
+     *          {@code length()}
      */
     public int intAt(int index) {
         return data[index];
@@ -62,9 +62,9 @@ public class IntSequence {
     /**
      * Returns a <code>CharSequence</code> that is a subsequence of this sequence.
      * The subsequence starts with the <code>char</code> value at the specified index and
-     * ends with the <code>char</code> value at index <tt>end - 1</tt>.  The length
+     * ends with the <code>char</code> value at index {@code end - 1}.  The length
      * (in <code>char</code>s) of the
-     * returned sequence is <tt>end - start</tt>, so if <tt>start == end</tt>
+     * returned sequence is {@code end - start}, so if {@code start == end}
      * then an empty sequence is returned.
      *
      * @param   start   the start index, inclusive
@@ -73,9 +73,9 @@ public class IntSequence {
      * @return  the specified subsequence
      *
      * @throws  IndexOutOfBoundsException
-     *          if <tt>start</tt> or <tt>end</tt> are negative,
-     *          if <tt>end</tt> is greater than <tt>length()</tt>,
-     *          or if <tt>start</tt> is greater than <tt>end</tt>
+     *          if {@code start} or {@code end} are negative,
+     *          if {@code end} is greater than {@code length()},
+     *          or if {@code start} is greater than {@code end}
      */
     public IntSequence subSequence(int start, int end) {
         return new IntSequence(this.data, start, end - start);

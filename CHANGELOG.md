@@ -1,6 +1,17 @@
 
 # FastBeanGen -  Fast Random Data Generator
 
+## v0.3.0 (unreleased)
+
+* Require Java 21; target Java 21 bytecode and verify compilation/runtime behavior on Java 21 and 25.
+* Upgrade the official Gradle wrapper, build plugins and dependencies across core, examples and document generation; remove JCenter/Bintray build/publication assumptions.
+* Adapt Reactor acknowledgements/schedulers, Jakarta persistence, Hibernate and OpenCSV while retaining existing example entry points and test oracles.
+* Repair the owner-approved inherited dataset/Monte Carlo constructor path without changing its existing expected operation sequences.
+* Add fixed historical-output references, document-content checks, bounded SQL/CUD/CSV verification and a Java 21/25 CI matrix.
+* Prepare local Maven artifacts, sources/Javadoc, validated metadata, a separate dependency consumer and optional signing/bundle preparation. No remote release is performed.
+
+See [migration and verification notes](docs/modernization.md) for compatibility limits and publication prerequisites.
+
 ## v0.1.8
 
 * [BUGFIX] fix failure to call selectOne on empty DataView (both DataSet and UnionDataView), now returns null if empty ([f923d143a9a3e21](https://github.com/tomasbjerre/git-changelog-gradle-plugin/commit/f923d143a9a3e21) - Geoffrey Picron - *2017-04-12 08:14:13*)
