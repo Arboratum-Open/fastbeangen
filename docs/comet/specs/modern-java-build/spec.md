@@ -55,3 +55,18 @@ README, changelog, and focused migration documentation must describe the support
 Builder checks focus on reference capture and relevant changed paths; final registered Runtime checks verify the submitted candidate without an unnecessary duplicate full-suite run. Preserve a single writer/build process in the worktree. Independent verification assesses every acceptance item and records real failures/blockers.
 
 The change excludes new functions, general architecture or random-algorithm replacement, a performance-tuning campaign, license changes, and remote delivery without a separate mandate.
+
+## Requirement: project-licensing First-party licensing and redistribution
+
+This requirement is the authoritative current licensing contract. It explicitly supersedes the preceding historical instruction "Keep the existing GPL-3.0 license." in Publication-ready distribution and the historical exclusion of license changes in Verification boundaries. All other preceding Java, build, compatibility, module, publication and verification requirements remain effective. The archived modernization evidence is not rewritten or reopened.
+
+The current first-party project is distributed under GNU Lesser General Public License version 3.0 only (SPDX: LGPL-3.0-only), covering its sources, examples, documentation and bundled dictionaries/document templates, subject to third-party rights. All project declarations and POM license names/links must consistently identify this grant, using the canonical GNU LGPL v3 link and an unambiguous version-3.0-only name/SPDX identifier. Do not silently add an or-later permission, dual license, or claim that LGPL is a permissive license.
+
+The repository supplies the unmodified official LGPL v3 text as LICENSE and retains the previous GPL v3 text byte-for-byte as COPYING, since LGPL v3 incorporates GPL v3. Existing first-party binary, sources, Javadoc and executable-example JAR variants include both texts, without duplicate first-party license entries or replacement of dependencies' own notices. Preserve existing coordinates, the unreleased version, and publication variants.
+
+The owner's confirmed rights/consents are the basis for this first-party relicensing, not evidence of an independent legal/provenance audit. Dependencies, the Gradle wrapper and other identified third-party material retain their licenses and notices. Preserve historical releases, granted GPL rights and archived Comet evidence. Describe LGPL as weak copyleft: integration/redistribution with applications under other terms remains subject to LGPL requirements, including applicable notices, source and modification/relinking conditions; do not promise unrestricted proprietary redistribution.
+
+Current README, changelog and publication guidance must agree with the selected grant and identify the incorporated GPL text, third-party boundary and unreleased/publication status. Publication verification must inspect actual POMs and packaged legal texts and detect incorrect/missing metadata or texts, while preserving all unrelated checks. Changes limited to this licensing contract must not modify Java behavior, bundled data/templates, PRNG, behavioral fixtures/assertions, supported runtimes or dependencies. Verify local publication/archive contents and the independent consumer on actual Java 21 and Java 25; do not claim unrun heavy suites passed.
+
+Relicensing does not authorize Git commits, publication, workspace cleanup or rewriting historical releases. Do not add local bootstrap files, private prototype material or unrelated work to the implementation change.
+

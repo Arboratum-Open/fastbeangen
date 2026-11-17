@@ -20,7 +20,8 @@ The three modules are `fastbeangen`, `fastbeangen-doc`, and `fastbeangen-example
 **Version 0.3.0 is unreleased.** The following commands prepare and validate a local Maven repository; they do not upload artifacts or make this version available from Maven Central.
 
 ```sh
-./gradlew --no-daemon publishAllPublicationsToLocalRepository
+python3 -m unittest discover -s verification -p 'test_publication_licenses.py'
+./gradlew --no-daemon --max-workers=1 assemble publishAllPublicationsToLocalRepository
 python3 verification/verify-publication.py
 ./gradlew --project-dir verification/consumer --no-daemon -PjavaVersion=21 run
 ```
@@ -59,7 +60,7 @@ For Maven, configure that same local file repository and use a normal JAR depend
 
 Maven Central is the intended release destination. Remove the local repository only after a release is actually published. Signing, namespace authorization and upload remain separate release prerequisites; see [publication preparation](docs/modernization.md#publication-preparation).
 
-## Examples and license
+## Examples
 
 ```sh
 python3 verification/verify-examples.py 21
@@ -67,4 +68,16 @@ python3 verification/verify-examples.py 21
 
 This runs the existing SQL generation, query, CUD and CSV entry points with bounded inputs/durations and embedded HSQLDB. It verifies successful results, not just process exit codes. The query phase takes one minute. No separately provisioned database is needed.
 
-The existing GNU GPL version 3 license is unchanged; see [LICENSE](LICENSE).
+## License
+
+FastBeanGen's own code, examples, documentation and bundled dictionaries/document templates are licensed under the **GNU Lesser General Public License, version 3.0 only (`LGPL-3.0-only`)**, except where an existing third-party notice states otherwise. No automatic permission to use a later LGPL version is granted.
+
+[LICENSE](LICENSE) contains the official LGPL v3 text. It incorporates GPL v3, whose full text is retained in [COPYING](COPYING). Both texts are included in the first-party binary, sources, Javadoc and example JARs produced by this build.
+
+LGPL is weak copyleft, not a permissive MIT/Apache license. Applications may use other licenses, but distribution must meet the applicable LGPL conditions, including:
+
+- retaining required notices, identifying use of the library, and providing both license texts;
+- providing the corresponding source of the LGPL-covered library and modifications as required by the license;
+- permitting modification of the library and reverse engineering to debug those modifications, and meeting the applicable replacement/relinking and installation-information requirements for combined works.
+
+These points do not certify compliance for a particular application or packaging method; consult the complete license terms. The Gradle wrapper, dependencies and other identified third-party material retain their own licenses and notices. This change does not rewrite earlier releases or revoke GPL rights already granted. Version 0.3.0 remains unreleased.
