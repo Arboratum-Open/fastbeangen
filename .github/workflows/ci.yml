@@ -15,16 +15,23 @@ jobs:
         java: ['21', '25']
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0 # The protected-input audit needs its pinned historical commit.
       - uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
         with:
           distribution: temurin
           java-version: ${{ matrix.java }}
           cache: gradle
-      - name: Compile, test, assemble and publish locally
+      - name: Compile, test Java guards, assemble and publish locally
         run: ./gradlew --no-daemon --console=plain --max-workers=1 -PjavaVersion=${{ matrix.java }} check assemble publishAllPublicationsToLocalRepository
-      - name: Verify local Maven artifacts
-        run: python3 verification/verify-publication.py
+      - name: Verify local Maven artifacts and signing rejection
+        run: ./gradlew --no-daemon --console=plain --max-workers=1 -PjavaVersion=${{ matrix.java }} verifyPublication verifySigningGuards
+      - name: Compare published API, protected inputs and characterized reference
+        if: matrix.java == '21'
+        run: ./gradlew --no-daemon --console=plain --max-workers=1 -PjavaVersion=21 verifyReference
       - name: Consume published dependencies
         run: ./gradlew --project-dir verification/consumer --no-daemon --console=plain --max-workers=1 -PjavaVersion=${{ matrix.java }} run
       - name: Exercise bounded embedded-database examples
-        run: python3 verification/verify-examples.py ${{ matrix.java }}
+        run: ./gradlew --no-daemon --console=plain --max-workers=1 -PjavaVersion=${{ matrix.java }} verifyExamples
+      - name: Stage and verify unsigned release assets
+        run: ./gradlew --no-daemon --console=plain --max-workers=1 -PjavaVersion=${{ matrix.java }} stageRelease verifyRelease

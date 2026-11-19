@@ -1,0 +1,30 @@
+plugins { id 'java' }
+
+repositories { mavenCentral() }
+java { toolchain { languageVersion = JavaLanguageVersion.of(21) } }
+dependencies {
+    testImplementation 'com.arboratum:fastbeangen:0.2.17'
+    testImplementation 'junit:junit:4.13.2'
+}
+sourceSets.test.java {
+    srcDir '../../fastbeangen/src/test/java'
+    include '**/PublishedApiCompatibilityTest.java'
+}
+// The published POM declares its exposed Reactor types with runtime scope.
+sourceSets.test.compileClasspath = configurations.testRuntimeClasspath
+
+test {
+    useJUnit()
+    maxHeapSize = '512m'
+    testLogging { events 'passed', 'failed' }
+    doFirst {
+        configurations.testRuntimeClasspath.resolvedConfiguration.resolvedArtifacts.sort { it.moduleVersion.id.toString() }.each {
+            def hash = java.security.MessageDigest.getInstance('SHA-256').digest(it.file.bytes).encodeHex()
+            if (it.moduleVersion.id.group == 'com.arboratum') {
+                def expected = new groovy.json.JsonSlurper().parse(file('reference.json')).sha256[it.file.name]
+                if (hash.toString() != expected) throw new GradleException('Published reference hash mismatch')
+            }
+            println "REFERENCE ${it.moduleVersion.id} SHA256 ${hash}"
+        }
+    }
+}

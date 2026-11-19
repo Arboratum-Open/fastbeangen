@@ -3,6 +3,12 @@
 
 ## v0.3.0 (unreleased)
 
+* Restore the actual published 0.2.17 database API: bounded filtered/transformed views, initial-entry provenance, entry-aware deletion and reference-aware updates; retain the compatible pre-release one-argument update hook.
+* Correct composed-view budget propagation, null transformed-view locks and initial-index provenance after deleted slots. Characterize the published binary's five passing and three failing reference cases instead of claiming an all-green baseline.
+* Prepare a whitelisted local GitHub asset set, source/artifact identity and SHA-256 manifest; validate required Central MD5/SHA-1 checksums/layout and reject missing/unusable signing input. Add negative guard tests and retain separate signing/namespace/Portal and publication gates.
+* Implement publication/license/release/example verification and its tests in Java/JUnit driven by Gradle; preserve all former guard cases, including hardlink backup and ZIP-directory payload regressions, without a Python runtime requirement.
+* Activate the CUD example's existing 20 operations/second limiter and warm-up before processing each operation; retain the 180-second example deadline, six checkpoints, one-minute query, CSV workload and assertions. Wall-clock batch counts intentionally change, not library seeded values or global feed pacing.
+
 * Relicense first-party code and bundled resources under LGPL-3.0-only; retain GPL v3 as incorporated base terms in COPYING and preserve third-party notices and previously granted GPL rights. Include both texts in first-party JARs and verify exact license metadata/content.
 * Require Java 21; target Java 21 bytecode and verify compilation/runtime behavior on Java 21 and 25.
 * Upgrade the official Gradle wrapper, build plugins and dependencies across core, examples and document generation; remove JCenter/Bintray build/publication assumptions.
@@ -11,7 +17,7 @@
 * Add fixed historical-output references, document-content checks, bounded SQL/CUD/CSV verification and a Java 21/25 CI matrix.
 * Prepare local Maven artifacts, sources/Javadoc, validated metadata, a separate dependency consumer and optional signing/bundle preparation. No remote release is performed.
 
-See [migration and verification notes](docs/modernization.md) for compatibility limits and publication prerequisites.
+See [migration and verification notes](docs/modernization.md) and the [0.3.0 release notes/checklist](docs/releases/0.3.0.md) for compatibility limits, actual published-version provenance and separate publication prerequisites.
 
 ## v0.1.8
 

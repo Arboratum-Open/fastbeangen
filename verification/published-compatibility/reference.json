@@ -1,0 +1,27 @@
+{
+  "version": "0.2.17",
+  "repository": "https://repo.maven.apache.org/maven2/com/arboratum",
+  "sha256": {
+    "fastbeangen-0.2.17.jar": "31538bea6e37bce326ef95e3a7a144149cbaada9c27b8595ff30b295aea9d70f",
+    "fastbeangen-0.2.17-sources.jar": "ad08814414e1899c88660abd9a1ccb0c203e14bf09664e70df6545e3b87c17b3",
+    "fastbeangen-0.2.17.pom": "f8d2afd951bf8433388fbe32a83654a40cf743a6775e165dbbec7a326b10790a",
+    "fastbeangen-doc-0.2.17.jar": "806a5a18469cedf3b7e00469d29c9eb9f4c12d43ad532c1b41f4d3db12a054ff",
+    "fastbeangen-doc-0.2.17-sources.jar": "40dd3c37bfff679051e86ceb4251793186bb4b8c0a57719886a2066d27431e81",
+    "fastbeangen-doc-0.2.17.pom": "eecc521fd811796f52059372fad60552e6ff4ba9a89184305b51071f8933ea3f"
+  },
+  "execution": {
+    "java": 21,
+    "library": "official unmodified 0.2.17 binary",
+    "dependencies": "published runtime graph; JUnit 4.13.2 is harness-only",
+    "compileClasspath": "published runtime classpath, because its POM declares exposed Reactor types with runtime scope",
+    "testClass": "com.arboratum.beangen.database.PublishedApiCompatibilityTest",
+    "tests": 8,
+    "passed": 5,
+    "failed": 3,
+    "knownFailures": {
+      "finiteBudgetsPropagateThroughComposedAndUnionViews": "NullPointerException: readLock is null",
+      "transformedSelectionRetainsEntryAndReferenceProvenance": "NullPointerException: readLock is null",
+      "initialProvenanceIncludesDeletedSlots": "AssertionError: requested live count excludes an initial index after a deleted slot"
+    }
+  }
+}
