@@ -27,17 +27,18 @@ class FilteredDataView<S,T> implements DataView<T> {
     private final Function<Entry<S>, Entry<T>> predicateTranform;
     private final Class<T> targetType;
     private final boolean cacheFilter;
+    private final int maxTryPerSelect;
     private volatile boolean filterFull = false;
     private final ReadWriteLock readWriteLock;
     private final Lock readLock;
     private final Lock writeLock;
 
 
-    protected static <S,T> FilteredDataView<S,T> createTransformedDataSet(DataSet<S> source, Function<S,T> transform, Class<T> targetType) {
-        return new FilteredDataView<S,T>(source.getName() + "T",  source, sEntry -> new TransformedEntry<>(sEntry, transform), targetType, false);
+    protected static <S,T> FilteredDataView<S,T> createTransformedDataSet(DataSet<S> source, Function<S,T> transform, Class<T> targetType, int maxTryPerSelect) {
+        return new FilteredDataView<S,T>(source.getName() + "T",  source, sEntry -> new TransformedEntry<>(sEntry, transform), targetType, false, maxTryPerSelect);
     }
 
-    protected static <T> FilteredDataView<T,T> createFilteredDataSet(DataSet<T> source, Predicate<T> predicate) {
+    protected static <T> FilteredDataView<T,T> createFilteredDataSet(DataSet<T> source, Predicate<T> predicate, int maxTryPerSelect) {
         return new FilteredDataView<T,T>(source.getName() + "F", source, sEntry -> {
             T value = sEntry.lastVersion().block();
             if (predicate.test(value)) {
@@ -45,24 +46,21 @@ class FilteredDataView<S,T> implements DataView<T> {
             } else {
                 return null;
             }
-        }, source.getEntryType(), true);
+        }, source.getEntryType(), true, maxTryPerSelect);
     }
 
-    private FilteredDataView(String name, DataSet<S> source, Function<Entry<S>, Entry<T>> predicateTranform, Class<T> targetType, boolean cacheFilter) {
+    private FilteredDataView(String name, DataSet<S> source, Function<Entry<S>, Entry<T>> predicateTranform, Class<T> targetType, boolean cacheFilter, int maxTryPerSelect) {
         this.name = name;
         this.source = source;
         this.predicateTranform = predicateTranform;
         this.targetType = targetType;
         this.cacheFilter = cacheFilter;
+        this.maxTryPerSelect = maxTryPerSelect;
+        readWriteLock = new ReentrantReadWriteLock();
+        readLock = readWriteLock.readLock();
+        writeLock = readWriteLock.writeLock();
         if (cacheFilter) {
-            readWriteLock = new ReentrantReadWriteLock();
-            readLock = readWriteLock.readLock();
-            writeLock = readWriteLock.writeLock();
             source.registerFilteredDataView(this);
-        } else {
-            readWriteLock = null;
-            readLock = null;
-            writeLock = null;
         }
     }
 
@@ -100,7 +98,9 @@ class FilteredDataView<S,T> implements DataView<T> {
             filter = new MutableRoaringBitmap();
         }
 
+        int trial = 0;
         do {
+            if (trial++ >= maxTryPerSelect) return null;
             int elementIndex = r.nextInt(source.getLastIndex() + 1);
 
             final boolean skip;
@@ -193,18 +193,18 @@ class FilteredDataView<S,T> implements DataView<T> {
     }
 
     @Override
-    public <T1> DataView<T1> transformedView(Function<T, T1> transformFunction, Class<T1> targetType) {
+    public <T1> DataView<T1> transformedView(Function<T, T1> transformFunction, Class<T1> targetType, int maxTryPerSelect) {
         return new FilteredDataView<S,T1>(source.getName() + "T", source, sEntry -> {
             Entry<T> tEntry = predicateTranform.apply(sEntry);
 
             if (tEntry == null) return null;
 
             return new TransformedEntry<>(tEntry, transformFunction);
-        }, targetType, false);
+        }, targetType, false, maxTryPerSelect);
     }
 
     @Override
-    public DataView<T> filteredView(Predicate<T> acceptPredicate) {
+    public DataView<T> filteredView(Predicate<T> acceptPredicate, int maxTryPerSelect) {
         return new FilteredDataView<S,T>(source.getName() + "F", source, sEntry -> {
             Entry<T> tEntry = predicateTranform.apply(sEntry);
             if (tEntry == null) return null;
@@ -215,7 +215,7 @@ class FilteredDataView<S,T> implements DataView<T> {
             } else {
                 return null;
             }
-        }, getEntryType(), true);
+        }, getEntryType(), true, maxTryPerSelect);
    }
 
     public void clearCache(Entry entry) {
@@ -271,6 +271,11 @@ class FilteredDataView<S,T> implements DataView<T> {
         @Override
         public boolean isDeleted() {
             return entry.isDeleted();
+        }
+
+        @Override
+        public boolean wasInInitialDataSet() {
+            return entry.wasInInitialDataSet();
         }
 
         @Override

@@ -1,0 +1,1085 @@
+schema: comet.native.v4
+name: prepare-release-0-3-0
+language: en
+phase: archive
+status: done
+state_version: 20
+brief: brief.md
+document_constraints_version: 3
+shape_confirmation_hash: db42bd84bb94bbfc6eda185ec7ece3d38c6dcce89d17a114d144c9a95889433a
+spec_changes:
+  - capability: modern-java-build
+    operation: modify
+    source: specs/modern-java-build/spec.md
+    delta_source: specs/modern-java-build/delta.yaml
+    base_hash: 697f467bbb32f048cc4b6840cb10f3b3cf087578e7812a656251a0e92baa5611
+workspace:
+  isolation: worktree
+  change_branch: comet/prepare-release-0-3-0
+  target_branch: master
+  finish: pull-request
+loop:
+  stage: done
+  goal_cycle: 3
+  iteration: 2
+  attempt: 1
+  retry_epoch: 0
+  failed_iteration_count: 1
+  no_progress_count: 0
+  execution_failure_count: 0
+  previous_unresolved_ids: []
+  next_action: null
+acceptance:
+  - id: A1
+    source: brief.md
+    text: "A1: The published core/document 0.2.17 API comparison has pinned artifact
+      provenance and identifies all in-scope gaps; an independent consumer using
+      the restored overloads, entry provenance, entry-aware deletion and
+      reference-aware updates compiles against the candidate's locally published
+      artifacts. Current compatible entry points are retained, and any
+      unavoidable source migration is explicitly documented."
+    result: passed
+    reason:
+      text: Independently reviewed the six official binary/source/POM SHA-256 pins,
+        ReferenceIntegrationTest, restored interfaces/implementations, isolated
+        POM-only consumer and migration documentation. Current Runtime
+        published-api-reference-invariants passes the finite
+        59-public-class/358-descriptor comparison, including DataView
+        inheritance; java21-consumer and java25-consumer both pass against the
+        two local 0.3.0 publications. Convenience overloads and the one-argument
+        update hook remain available; deletion-predicate erasure and custom
+        Entry/DataView source migrations are explicitly documented.
+      truncated: false
+  - id: A2
+    source: brief.md
+    text: "A2: Focused reference-backed tests demonstrate the restored runtime
+      contracts: bounded filtered/transformed selection returns null on
+      exhausted/non-positive budgets or empty input as published, budgets
+      propagate through applicable union/transformed views, initial-entry
+      provenance remains correct, deletion predicates receive Entry values and
+      update predicates receive the matching EntryRef. Tests include
+      rejection/exhaustion paths and do not silently import unrelated historical
+      defects."
+    result: passed
+    reason:
+      text: Reviewed the bounded trial counter, explicit budget propagation through
+        composed/union views, unconditional transformed-view lock
+        initialization, initial-index boundary including deleted slots,
+        transformed entry/reference provenance, actual Entry deletion predicate
+        and matching EntryRef update hook. PublishedApiCompatibilityTest covers
+        positive/zero/negative/exhausted/empty selection, composition/union,
+        created versus initial/deleted provenance, deletion and
+        accepted/rejected updates; all eight pass in candidate suites on both
+        JDKs. The independent official 0.2.17 run remains exit 1 with five
+        passes and three named characterized defects, rather than importing or
+        disguising those defects.
+      truncated: false
+  - id: A3
+    source: brief.md
+    text: "A3: Existing historical fixtures, PRNG, data/templates, scenarios,
+      assertions and statistical/document tolerances remain intact; actual Java
+      21/25 checks pass for the candidate's applicable
+      core/document/operation-feed behavior. Any detected output exception
+      remains unresolved without specific owner acceptance, and finite probes
+      are not described as exhaustive compatibility."
+    result: passed
+    reason:
+      text: "Current java21-build-publication and java25-build-publication Runtime
+        records pass all three module checks. Reviewed the protected-input
+        implementation and fresh report: 223 baseline
+        source/test/resource/build/legal/archive inputs are byte-identical. The
+        additional verifier-focused-source-diff confirms that changes within the
+        seven excluded database classes are confined to the restored
+        contracts/related fixes and the authorized CUD caller has one added
+        acquisition; PRNG, deterministic operation-feed expectations, historical
+        fixtures, data/templates and statistical/document tolerances are
+        unchanged. No new generated-value exception was found; documentation
+        correctly limits finite compatibility evidence."
+      truncated: false
+  - id: A4
+    source: brief.md
+    text: "A4: Local publication and the independent POM-only consumer pass on
+      actual Java 21 and Java 25 for both unchanged 0.3.0 coordinates.
+      Binary/sources/Javadoc JARs and POMs retain Java 21 compatibility, exact
+      LGPL/GPL texts, accurate license/SCM/developer metadata and valid required
+      checksums, with all prior publication checks preserved."
+    result: passed
+    reason:
+      text: Both current Runtime build/publication and independent POM-only consumer
+        paths pass on Java 21 and 25. Reviewed Gradle toolchain/--release 21
+        configuration, actual core/document POMs, PublicationVerification and
+        fresh publication JUnit report. Both unchanged coordinates retain
+        binary/sources/Javadoc variants, exact canonical LGPL/GPL hashes and
+        unique packaged texts, developer/SCM/license metadata, Java 21
+        classfile/variant targets and artifact checksum checks. Release
+        repository checks additionally enforce required MD5/SHA-1/SHA-256
+        values.
+      truncated: false
+  - id: A5
+    source: brief.md
+    text: "A5: The generated local GitHub asset set contains only the intended
+      core/document release files, release notes and a verified SHA-256 manifest
+      with honest source/artifact identity. Missing, altered or
+      extraneous/private input is rejected; no generated assets or
+      bootstrap/private prototype files enter the product commit scope."
+    result: passed
+    reason:
+      text: "Inspected the actual 11-file staged set and manifest: six JARs, two POMs,
+        notes and two manifests, unsigned/unverified, base
+        4a267527c030a1016c113714fc334c2c4844cbdd, modified worktree, 256 source
+        inputs/three tracked deletions and source SHA-256
+        0c6f0b384e9ebe1a292f7944c68a5a33cb9ee45fbdd5a57df5a9d840bd716ce2. Both
+        current release-assets Runtime paths pass. Reviewed payload
+        allowlisting, current-input/source-identity comparisons and negative
+        cases for missing/altered/foreign/private/linked inputs, including
+        preservation of hardlinked external backups. Native-executed scope
+        status contains no generated asset or private prototype addition to the
+        product changes; locally installed bootstrap files remain separate
+        untracked maintenance material, not release payloads."
+      truncated: false
+  - id: A6
+    source: brief.md
+    text: "A6: Release checks validate the intended Central Maven layout and
+      required MD5/SHA-1 checksums, and the signed-bundle path fails closed
+      without a usable signing key. Negative self-tests exercise these guards.
+      With no supplied real key or Portal authorization, the result explicitly
+      records unsigned preparation only and lists real signing, key
+      availability, namespace authorization and Portal validation as pending,
+      not passed."
+    result: passed
+    reason:
+      text: Reviewed Central version-layout/allowlist, required MD5/SHA-1 checksums,
+        per-artifact signature presence/armor,
+        duplicate/traversal/symlink/exact-content and empty-directory-payload
+        guards and their Java tests. Current signing-fail-closed Runtime check
+        passes; its fresh JUnit report verifies actual bundle task exit 1 for
+        absent, blank and unusable non-key fixture input with existing outputs
+        preserved. Signed ZIP success fixtures are structural only. Manifest and
+        current guidance explicitly leave real signing/cryptographic
+        verification, public-key availability, namespace authorization and
+        Portal validation/acceptance pending.
+      truncated: false
+  - id: A7
+    source: brief.md
+    text: "A7: English release notes, changelog and publication guidance
+      consistently describe 0.3.0 as prepared/unreleased, Java 21 minimum and
+      Java 25 verification, published-0.2.17 migration/restored APIs,
+      LGPL-3.0-only and third-party/historical boundaries, actual evidence and
+      its limits, plus the separate future GitHub/tag/Central publication steps.
+      No tag, release, upload, commit/push/PR/merge or archived-formal mutation
+      occurs under this preparation mandate."
+    result: passed
+    reason:
+      text: Independently read README, changelog, modernization guidance, release
+        notes and verification guidance. They consistently describe
+        prepared/unreleased 0.3.0, Java 21 minimum/25 verification,
+        published-0.2.17 restoration and source migrations, LGPL-3.0-only
+        weak-copyleft obligations with third-party/prior-rights boundaries,
+        dirty source identity, actual finite evidence and separate later
+        GitHub/tag/Central gates. Current source identity remains at the
+        starting commit and protected archived inputs match baseline. No
+        delivery/publication operation was executed during this verification or
+        evidenced as part of this preparation; remote CI is configured, not
+        claimed executed.
+      truncated: false
+  - id: A8
+    source: brief.md
+    text: "A8: The existing CUD example consumes its supplied RateLimiter,
+      configured at 20 operations/second with the existing warm-up, before
+      processing each emitted operation. A small regression fails for the
+      unpaced implementation and passes for the minimal correction. The actual
+      Java 21/25 bounded example checks pass without changing their 180-second
+      timeout, six CUD checkpoints, one-minute query, 20,000 persons, 20
+      relations, 47 links or other assertions. Document the intentional
+      wall-clock cadence/batch-count change and focused same-base
+      characterization without claiming identical asynchronous interleavings or
+      accepting changed library seeded values. Do not change library feed
+      pacing, PRNG, deterministic operation-feed oracles, dependencies or
+      acknowledgement/backpressure/cancellation implementation."
+    result: passed
+    reason:
+      text: Native-executed focused diff proves exactly rateLimiter.acquire() was
+        added before stopwatch/DAO processing in the existing CUD mapping. The
+        existing 20 operations/second configuration and five-second warm-up
+        remain. Reviewed the small actual-pipeline JUnit regression, retained
+        development red log and current green candidate report. Both current
+        real bounded-example Runtime checks pass (approximately 77 seconds
+        including Gradle), retaining the shared 180-second execution deadline,
+        six checkpoints, one-minute query and 20000/20/47 CSV assertions.
+        Same-base unpaced-growth characterization and intentional wall-clock
+        batch/cadence change are documented without an identical-interleaving
+        claim. Library pacing, PRNG, dependency inputs, deterministic feed
+        oracles and acknowledgement/backpressure/cancellation implementation are
+        unchanged.
+      truncated: false
+  - id: A9
+    source: brief.md
+    text: "A9: Publication/license/release/example verification is implemented in
+      Java, with genuine JUnit tests and Gradle as the local/CI/Runtime driver,
+      not Python invoked indirectly. The current 24 Python methods and all
+      subcases retain their assertions and outcomes, including the hardlink
+      backup and ZIP directory-payload regressions, with an explicit case
+      mapping and Gradle test reports. Actual Java 21/25 runs cover the migrated
+      guards and applicable artifact/example/staging paths. Remove the five
+      superseded Python verification files and active Python verification
+      commands, preserve historical archives/evidence, keep the three
+      application modules and two publications, and add no unnecessary
+      dependency or general release framework."
+    result: passed
+    reason:
+      text: Reviewed the Java utilities/JUnit classes, Gradle source sets/tasks, CI
+        and explicit case map, and compared the retained historical 8 license
+        plus 16 release methods and their subcases with the Java replacements.
+        All preserved outcomes are represented, including duplicate legal text,
+        grant/URL checks, checksum restoration subcases, signature
+        CRLF/malformed armor, real duplicate/symlink ZIP fixtures,
+        traversal/content rejection, hardlink backup preservation and
+        directory-payload rejection. Current java21-java-guards and
+        java25-java-guards pass; reports contain 30 genuine guard tests, and an
+        explicit runtime assertion confirms the selected JDK. Applicable actual
+        publication/consumer/example/staging paths pass on both JDKs. The five
+        superseded active Python files are absent, no active Python executor
+        remains, historical evidence is retained, and the structure remains
+        three application modules/two publications with build-only
+        existing-version facilities.
+      truncated: false
+builder_handoff:
+  candidate_id: 0e5ccb39-af4b-4922-bffc-03c38231a24e
+  identity_provider: skill-coordinated
+  builder_execution_ref: skill-coordinated:builder:f1786327-b91e-4994-ad4c-afbaf9409754
+  iteration: 2
+  summary:
+    text: "Recovery submission of complete A1–A9 implementation, not a partial
+      candidate or new requirement. No product file was edited after previous
+      handoff. Its12Runtime checks all passed, including full
+      suites/publications/consumers/real examples on21/25 and30Java/JUnit
+      guards. SDK startup was rejected before launching because an intervening
+      read-only owner-context/select response lacked the official dispatch.
+      Recorded host execution error, followed returned retry template, then
+      Native returned Build14 because check input binding changed; doctor is
+      healthy. Do not force reuse of invalidated bindings: the same complete
+      Gradle/Java plan is resubmitted for Runtime to judge/execute. Actual
+      current unsigned manifest
+      remains11files,base4a267527,dirty,sourceSHA0c6f0b384e9ebe1a292f7944c68a5a\
+      33cb9ee45fbdd5a57df5a9d840bd716ce2. Seven database API restorations,
+      independent consumer, strict legal/release/Central guards,
+      real24method/subcase Java migration plus extras, one-line20op/s CUD
+      acquire and CI fetch-depth0 are complete. No delivery/publication/Archive
+      authorized or performed."
+    truncated: false
+  addressed_acceptance_ids:
+    - A1
+    - A2
+    - A3
+    - A4
+    - A5
+    - A6
+    - A7
+    - A8
+    - A9
+  acceptance_review:
+    - id: A1
+      status: implemented-with-evidence
+      evidence:
+        - verification/published-compatibility/reference.json
+        - verification/src/test/java/com/arboratum/beangen/verification/ReferenceIntegrationTest.java
+        - verification/consumer/src/main/java/PublicationSmoke.java
+        - build/verification/published-reference.log
+      note: Six official0.2.17URL/SHA256pins, finite59classes/358descriptor comparison
+        with no missing inherited methods; independent POM-only consumers
+        actually passed both21/25 in previous Runtime execution. Unavoidable
+        deletion erasure and custom Entry/DataView migrations documented.
+    - id: A2
+      status: implemented-with-evidence
+      evidence:
+        - fastbeangen/src/main/java/com/arboratum/beangen/database/
+        - fastbeangen/src/test/java/com/arboratum/beangen/database/PublishedApiCompatibilityTest.java
+        - fastbeangen/src/test/java/com/arboratum/beangen/database/LegacyUpdateHookCompatibilityTest.java
+        - build/verification/published-reference.log
+      note: Bounded/exhausted/nonpositive/empty selection, composition/union budgets,
+        initial/deleted/created/transformed provenance, actualEntry deletion and
+        matchingEntryRef updates implemented; legacy hook bridge retained.
+        Same8probes on original0.2.17remain5pass/3exact defects and actual
+        Gradle exit1; candidate tests passed. No old unrelated defect imported.
+    - id: A3
+      status: implemented-with-evidence
+      evidence:
+        - verification/src/test/java/com/arboratum/beangen/verification/ReferenceIntegrationTest.java
+        - fastbeangen/src/test/resources/historical-output.tsv
+        - fastbeangen/src/test/java/com/arboratum/beangen/HistoricalOutputCompatibilityTest.java
+        - fastbeangen/src/test/java/com/arboratum/beangen/database/OperationAcknowledgementTest.java
+      note: 223protected baseline
+        sources/tests/resources/subproject-build/legal/archive inputs unchanged
+        under explicit7database+CUD caller exceptions; old
+        tests/oracles/PRNG/data/templates/dependencies preserved. Full suites on
+        real21/25 previously Runtime-passed; current binding gets the complete
+        registered re-evaluation, no forced reuse.
+    - id: A4
+      status: implemented-with-evidence
+      evidence:
+        - build.gradle
+        - verification/src/main/java/com/arboratum/beangen/verification/PublicationVerification.java
+        - verification/src/test/java/com/arboratum/beangen/verification/PublicationIntegrationTest.java
+        - verification/consumer/build.gradle
+      note: Both unchanged coordinates, actual local publications/independent POM-only
+        consumers passed21/25; strict canonical legal
+        texts/metadata/checksums/classfile21/variants inspected by Java.
+        Verification-only dependencies cannot enter module publications. Current
+        plan retains both full paths.
+    - id: A5
+      status: implemented-with-evidence
+      evidence:
+        - verification/src/main/java/com/arboratum/beangen/verification/ReleaseVerification.java
+        - verification/src/test/java/com/arboratum/beangen/verification/ReleaseTest.java
+        - build/release/0.3.0/release-manifest.json
+        - build/release/0.3.0/SHA256SUMS
+      note: 11allowlisted unsigned assets verified and staged by real21/25;
+        manifest256source inputs/3tracked deletions/base4a267527/dirty/current
+        sourceSHA0c6f0b384e9ebe1a292f7944c68a5a33cb9ee45fbdd5a57df5a9d840bd716ce2.
+        Missing/altered/foreign/private/symlink/hardlink protections including
+        external-backup preservation covered. No outputs/bootstrap/private
+        prototype in product commit scope; no commit performed.
+    - id: A6
+      status: implemented-with-evidence
+      evidence:
+        - verification/src/main/java/com/arboratum/beangen/verification/ReleaseVerification.java
+        - verification/src/test/java/com/arboratum/beangen/verification/ReleaseTest.java
+        - verification/src/test/java/com/arboratum/beangen/verification/SigningIntegrationTest.java
+        - build/verification/signing-missing.log
+        - build/verification/signing-blank.log
+        - build/verification/signing-unusable.log
+      note: Required
+        MD5/SHA1/SHA256/optionalSHA512/layout/armor/ZIP/modes/duplicates/empty-directory-payload
+        guards preserved. Actual missing/blank/unusable signing bundle builds
+        exit1/noZIP; Runtime control passed. All signatures in tests synthetic
+        only. No real key inspected/created and
+        crypto/public-key/namespace/Portal explicitly pending.
+    - id: A7
+      status: implemented-with-evidence
+      evidence:
+        - README.md
+        - CHANGELOG.md
+        - docs/modernization.md
+        - docs/releases/0.3.0.md
+        - verification/README.md
+        - .github/workflows/ci.yml
+      note: Current English docs distinguish prepared/unreleased,
+        migration0.2.17/5pass3fail/finite proof, actual21/25, LGPL-only
+        weak-copyleft/third-party/prior rights, dirty identity and later
+        GitHub/tag/Central gates. Active commands use Gradle/Java; CI
+        fetch-depth0 preserves baseline availability, remote CI not executed. No
+        commit/push/PR/merge/tag/release/upload/Archive/cleanup or archive
+        edits.
+    - id: A8
+      status: implemented-with-evidence
+      evidence:
+        - fastbeangen-example/src/main/java/com/arboratum/beangen/example1/SimpleGenAndQueryTest.java
+        - fastbeangen-example/src/test/java/com/arboratum/beangen/example1/CudRateLimiterTest.java
+        - build/verification/development-java-migration/cud-limiter-red.log
+        - build/verification/development-java-migration/cud-limiter-green25.log
+        - build/verification/development-java-migration/baseline4a-cud21.log
+        - build/test-results/verifyExamples/TEST-com.arboratum.beangen.verification.ExamplesIntegrationTest.xml
+      note: Exactly acquire() added before stopwatch/DAO. Supplied20op/s/5s warm-up
+        preserved, real RED/GREEN regression on21/25. Actual Runtime real
+        example checks passed21/25 around75s within unchanged180s, six
+        checkpoints/query1min/CSV20000-20-47/assertions unchanged. Intentional
+        wall-clock cadence limited, no identical
+        interleaving/global-feed/PRNG/ack claim.
+    - id: A9
+      status: implemented-with-evidence
+      evidence:
+        - verification/src/main/java/com/arboratum/beangen/verification/
+        - verification/src/test/java/com/arboratum/beangen/verification/
+        - verification/README.md
+        - build.gradle
+        - .github/workflows/ci.yml
+        - build/verification/development-java-migration/historical-python/
+        - build/test-results/verificationTest/
+      note: Actual implementations ported, no indirect Python.
+        Explicit8+16original-method/subcase mapping, preserved guards including
+        hardlink backup/ZIP directory payload plus CSV/deletion
+        identity/runtime/owned-process cleanup tests:30guards Runtime-passed
+        real21/25. FivePython active files removed; snapshots generated review
+        data only. Private source sets/tasks,3app modules/2publications/current
+        dependency versions; Gradle drives local/CI/Runtime and isolated
+        consumer/reference.
+  checks:
+    - name:
+        text: Previous complete Runtime plan
+        truncated: false
+      result: passed
+      note:
+        text: "All12actual executions exit0: guard30on21/25, both full
+          suites/publications/consumers/examples, official
+          characterization/invariants, actual signing rejection and
+          stage/verify21/25. Later binding invalidation is recorded; do not
+          force these receipts valid for new candidate."
+        truncated: false
+    - name:
+        text: Current unchanged asset identity inspection
+        truncated: false
+      result: passed
+      note:
+        text: 11files;
+          sourceSHA0c6f0b384e9ebe1a292f7944c68a5a33cb9ee45fbdd5a57df5a9d840bd716ce2/base4a267527/dirty256inputs3deletions;
+          no source mutation during host-recovery calls.
+        truncated: false
+    - name:
+        text: Native doctor
+        truncated: false
+      result: passed
+      note:
+        text: Healthy/repairedfalse after returnBuild14; no manual state repair.
+        truncated: false
+    - name:
+        text: git diff --check
+        truncated: false
+      result: failed
+      note:
+        text: Exit2/88indent-with-spaces; retained actual failure, no rule relaxation.
+        truncated: false
+  checks_truncated: false
+  known_limits:
+    - text: git diff --check is FAILED exit2/88indentation diagnostics, no config
+        relaxation; compilation/Javadoc/runner/logging-provider warnings
+        retained.
+      truncated: false
+    - text: No remote CI dispatched and no
+        commit/push/PR/merge/tag/release/upload/Archive/cleanup authorized or
+        performed. Dirty source identity is not a release commit; private
+        prototype/bootstrap/IDE/historical formals preserved/excluded.
+      truncated: false
+    - text: Unsigned preparation only. Synthetic structural signatures prove no real
+        signing/crypto/public-key availability or ownership/namespace
+        rights/Portal validation or acceptance.
+      truncated: false
+    - text: Original0.2.17reference actual exit1,8tests with5pass/3exact defects.
+        Finite59classes/358descriptors/probes and223protected paths are not
+        exhaustive linkage/all-seed/legal/security/benchmark certification;
+        PalDB maintenance limitation retained.
+      truncated: false
+    - text: CodeGraph unavailable, no repair/exclusion changes/index borrowing.
+        Reviewer-2 was optional static review only, not Native Verifier. No
+        official child has started yet; first host launch failed before startup
+        and is recorded, not a candidate semantic failure.
+      truncated: false
+    - text: Previous12passed receipts were invalidated by Runtime input binding on
+        recovery; no manual state editing/receipt fabrication or force reuse.
+        Current plan remains complete and Runtime-authoritative.
+      truncated: false
+  known_limits_truncated: false
+  review: null
+  submitted_at: 2026-11-18T16:07:12.024Z
+blockers: []
+verification:
+  candidate_id: 0e5ccb39-af4b-4922-bffc-03c38231a24e
+  identity_provider: skill-coordinated
+  verifier_execution_ref: skill-coordinated:verifier:6084362e-cd8e-41e3-b751-61c2503a61af
+  iteration: 2
+  attempt: 1
+  assurance: skill-coordinated
+  verdict: pass
+  checks:
+    - id: java21-java-guards
+      name:
+        text: Java21 genuine JUnit verification guards
+        truncated: false
+      argv_display:
+        - text: -u
+          truncated: false
+        - text: "[REDACTED]"
+          truncated: false
+        - text: -u
+          truncated: false
+        - text: "[REDACTED]"
+          truncated: false
+        - text: JAVA_HOME=/Library/Java/JavaVirtualMachines/temurin-21.jdk/Contents/Home
+          truncated: false
+        - text: ./gradlew
+          truncated: false
+        - text: --no-daemon
+          truncated: false
+        - text: --console=plain
+          truncated: false
+        - text: --max-workers=1
+          truncated: false
+        - text: -PjavaVersion=21
+          truncated: false
+        - text: --rerun-tasks
+          truncated: false
+        - text: verificationTest
+          truncated: false
+      argv_truncated: false
+      cwd_ref: .
+      status: passed
+      exit_code: 0
+      duration_ms: 5927
+    - id: java21-build-publication
+      name:
+        text: Java21 complete module suites and actual publications
+        truncated: false
+      argv_display:
+        - text: -u
+          truncated: false
+        - text: "[REDACTED]"
+          truncated: false
+        - text: -u
+          truncated: false
+        - text: "[REDACTED]"
+          truncated: false
+        - text: JAVA_HOME=/Library/Java/JavaVirtualMachines/temurin-21.jdk/Contents/Home
+          truncated: false
+        - text: ./gradlew
+          truncated: false
+        - text: --no-daemon
+          truncated: false
+        - text: --console=plain
+          truncated: false
+        - text: --max-workers=1
+          truncated: false
+        - text: -PjavaVersion=21
+          truncated: false
+        - text: --rerun-tasks
+          truncated: false
+        - text: :fastbeangen:check
+          truncated: false
+        - text: :fastbeangen-doc:check
+          truncated: false
+        - text: :fastbeangen-example:check
+          truncated: false
+        - text: assemble
+          truncated: false
+        - text: publishAllPublicationsToLocalRepository
+          truncated: false
+        - text: verifyPublication
+          truncated: false
+      argv_truncated: false
+      cwd_ref: .
+      status: passed
+      exit_code: 0
+      duration_ms: 28948
+    - id: java21-consumer
+      name:
+        text: Java21 independent POM-only publication consumer
+        truncated: false
+      argv_display:
+        - text: -u
+          truncated: false
+        - text: "[REDACTED]"
+          truncated: false
+        - text: -u
+          truncated: false
+        - text: "[REDACTED]"
+          truncated: false
+        - text: JAVA_HOME=/Library/Java/JavaVirtualMachines/temurin-21.jdk/Contents/Home
+          truncated: false
+        - text: ./gradlew
+          truncated: false
+        - text: --project-dir
+          truncated: false
+        - text: verification/consumer
+          truncated: false
+        - text: --no-daemon
+          truncated: false
+        - text: --console=plain
+          truncated: false
+        - text: --max-workers=1
+          truncated: false
+        - text: -PjavaVersion=21
+          truncated: false
+        - text: --rerun-tasks
+          truncated: false
+        - text: run
+          truncated: false
+      argv_truncated: false
+      cwd_ref: .
+      status: passed
+      exit_code: 0
+      duration_ms: 4072
+    - id: java21-examples
+      name:
+        text: Java21 real bounded examples via Gradle JUnit
+        truncated: false
+      argv_display:
+        - text: -u
+          truncated: false
+        - text: "[REDACTED]"
+          truncated: false
+        - text: -u
+          truncated: false
+        - text: "[REDACTED]"
+          truncated: false
+        - text: JAVA_HOME=/Library/Java/JavaVirtualMachines/temurin-21.jdk/Contents/Home
+          truncated: false
+        - text: ./gradlew
+          truncated: false
+        - text: --no-daemon
+          truncated: false
+        - text: --console=plain
+          truncated: false
+        - text: --max-workers=1
+          truncated: false
+        - text: -PjavaVersion=21
+          truncated: false
+        - text: verifyExamples
+          truncated: false
+      argv_truncated: false
+      cwd_ref: .
+      status: passed
+      exit_code: 0
+      duration_ms: 77354
+    - id: java25-java-guards
+      name:
+        text: Java25 genuine JUnit verification guards
+        truncated: false
+      argv_display:
+        - text: -u
+          truncated: false
+        - text: "[REDACTED]"
+          truncated: false
+        - text: -u
+          truncated: false
+        - text: "[REDACTED]"
+          truncated: false
+        - text: JAVA_HOME=/Library/Java/JavaVirtualMachines/temurin-21.jdk/Contents/Home
+          truncated: false
+        - text: ./gradlew
+          truncated: false
+        - text: --no-daemon
+          truncated: false
+        - text: --console=plain
+          truncated: false
+        - text: --max-workers=1
+          truncated: false
+        - text: -PjavaVersion=25
+          truncated: false
+        - text: --rerun-tasks
+          truncated: false
+        - text: verificationTest
+          truncated: false
+      argv_truncated: false
+      cwd_ref: .
+      status: passed
+      exit_code: 0
+      duration_ms: 6174
+    - id: java25-build-publication
+      name:
+        text: Java25 complete module suites and actual publications
+        truncated: false
+      argv_display:
+        - text: -u
+          truncated: false
+        - text: "[REDACTED]"
+          truncated: false
+        - text: -u
+          truncated: false
+        - text: "[REDACTED]"
+          truncated: false
+        - text: JAVA_HOME=/Library/Java/JavaVirtualMachines/temurin-21.jdk/Contents/Home
+          truncated: false
+        - text: ./gradlew
+          truncated: false
+        - text: --no-daemon
+          truncated: false
+        - text: --console=plain
+          truncated: false
+        - text: --max-workers=1
+          truncated: false
+        - text: -PjavaVersion=25
+          truncated: false
+        - text: --rerun-tasks
+          truncated: false
+        - text: :fastbeangen:check
+          truncated: false
+        - text: :fastbeangen-doc:check
+          truncated: false
+        - text: :fastbeangen-example:check
+          truncated: false
+        - text: assemble
+          truncated: false
+        - text: publishAllPublicationsToLocalRepository
+          truncated: false
+        - text: verifyPublication
+          truncated: false
+      argv_truncated: false
+      cwd_ref: .
+      status: passed
+      exit_code: 0
+      duration_ms: 26920
+    - id: java25-consumer
+      name:
+        text: Java25 independent POM-only publication consumer
+        truncated: false
+      argv_display:
+        - text: -u
+          truncated: false
+        - text: "[REDACTED]"
+          truncated: false
+        - text: -u
+          truncated: false
+        - text: "[REDACTED]"
+          truncated: false
+        - text: JAVA_HOME=/Library/Java/JavaVirtualMachines/temurin-21.jdk/Contents/Home
+          truncated: false
+        - text: ./gradlew
+          truncated: false
+        - text: --project-dir
+          truncated: false
+        - text: verification/consumer
+          truncated: false
+        - text: --no-daemon
+          truncated: false
+        - text: --console=plain
+          truncated: false
+        - text: --max-workers=1
+          truncated: false
+        - text: -PjavaVersion=25
+          truncated: false
+        - text: --rerun-tasks
+          truncated: false
+        - text: run
+          truncated: false
+      argv_truncated: false
+      cwd_ref: .
+      status: passed
+      exit_code: 0
+      duration_ms: 4136
+    - id: java25-examples
+      name:
+        text: Java25 real bounded examples via Gradle JUnit
+        truncated: false
+      argv_display:
+        - text: -u
+          truncated: false
+        - text: "[REDACTED]"
+          truncated: false
+        - text: -u
+          truncated: false
+        - text: "[REDACTED]"
+          truncated: false
+        - text: JAVA_HOME=/Library/Java/JavaVirtualMachines/temurin-21.jdk/Contents/Home
+          truncated: false
+        - text: ./gradlew
+          truncated: false
+        - text: --no-daemon
+          truncated: false
+        - text: --console=plain
+          truncated: false
+        - text: --max-workers=1
+          truncated: false
+        - text: -PjavaVersion=25
+          truncated: false
+        - text: verifyExamples
+          truncated: false
+      argv_truncated: false
+      cwd_ref: .
+      status: passed
+      exit_code: 0
+      duration_ms: 77059
+    - id: published-api-reference-invariants
+      name:
+        text: Official pinned API, protected inputs and exactly characterized reference
+          failures
+        truncated: false
+      argv_display:
+        - text: -u
+          truncated: false
+        - text: "[REDACTED]"
+          truncated: false
+        - text: -u
+          truncated: false
+        - text: "[REDACTED]"
+          truncated: false
+        - text: JAVA_HOME=/Library/Java/JavaVirtualMachines/temurin-21.jdk/Contents/Home
+          truncated: false
+        - text: ./gradlew
+          truncated: false
+        - text: --no-daemon
+          truncated: false
+        - text: --console=plain
+          truncated: false
+        - text: --max-workers=1
+          truncated: false
+        - text: -PjavaVersion=21
+          truncated: false
+        - text: verifyReference
+          truncated: false
+      argv_truncated: false
+      cwd_ref: .
+      status: passed
+      exit_code: 0
+      duration_ms: 11106
+    - id: signing-fail-closed
+      name:
+        text: Actual bundle rejection for missing blank unusable non-key fixture input
+        truncated: false
+      argv_display:
+        - text: -u
+          truncated: false
+        - text: "[REDACTED]"
+          truncated: false
+        - text: -u
+          truncated: false
+        - text: "[REDACTED]"
+          truncated: false
+        - text: JAVA_HOME=/Library/Java/JavaVirtualMachines/temurin-21.jdk/Contents/Home
+          truncated: false
+        - text: ./gradlew
+          truncated: false
+        - text: --no-daemon
+          truncated: false
+        - text: --console=plain
+          truncated: false
+        - text: --max-workers=1
+          truncated: false
+        - text: -PjavaVersion=21
+          truncated: false
+        - text: verifySigningGuards
+          truncated: false
+      argv_truncated: false
+      cwd_ref: .
+      status: passed
+      exit_code: 0
+      duration_ms: 14936
+    - id: java21-release-assets
+      name:
+        text: Java21 actual local release staging and current-source identity
+          verification
+        truncated: false
+      argv_display:
+        - text: -u
+          truncated: false
+        - text: "[REDACTED]"
+          truncated: false
+        - text: -u
+          truncated: false
+        - text: "[REDACTED]"
+          truncated: false
+        - text: JAVA_HOME=/Library/Java/JavaVirtualMachines/temurin-21.jdk/Contents/Home
+          truncated: false
+        - text: ./gradlew
+          truncated: false
+        - text: --no-daemon
+          truncated: false
+        - text: --console=plain
+          truncated: false
+        - text: --max-workers=1
+          truncated: false
+        - text: -PjavaVersion=21
+          truncated: false
+        - text: stageRelease
+          truncated: false
+        - text: verifyRelease
+          truncated: false
+      argv_truncated: false
+      cwd_ref: .
+      status: passed
+      exit_code: 0
+      duration_ms: 4527
+    - id: java25-release-assets
+      name:
+        text: Java25 actual local release staging and current-source identity
+          verification
+        truncated: false
+      argv_display:
+        - text: -u
+          truncated: false
+        - text: "[REDACTED]"
+          truncated: false
+        - text: -u
+          truncated: false
+        - text: "[REDACTED]"
+          truncated: false
+        - text: JAVA_HOME=/Library/Java/JavaVirtualMachines/temurin-21.jdk/Contents/Home
+          truncated: false
+        - text: ./gradlew
+          truncated: false
+        - text: --no-daemon
+          truncated: false
+        - text: --console=plain
+          truncated: false
+        - text: --max-workers=1
+          truncated: false
+        - text: -PjavaVersion=25
+          truncated: false
+        - text: stageRelease
+          truncated: false
+        - text: verifyRelease
+          truncated: false
+      argv_truncated: false
+      cwd_ref: .
+      status: passed
+      exit_code: 0
+      duration_ms: 8158
+    - id: verifier-focused-source-diff
+      name:
+        text: Independent focused baseline diff for seven database classes and
+          authorized CUD caller
+        truncated: false
+      argv_display:
+        - text: diff
+          truncated: false
+        - text: --no-ext-diff
+          truncated: false
+        - text: 4a267527c030a1016c113714fc334c2c4844cbdd
+          truncated: false
+        - text: --
+          truncated: false
+        - text: fastbeangen/src/main/java/com/arboratum/beangen/database/
+          truncated: false
+        - text: fastbeangen-example/src/main/java/com/arboratum/beangen/example1/SimpleGenAndQueryTest.java
+          truncated: false
+      argv_truncated: false
+      cwd_ref: .
+      status: passed
+      exit_code: 0
+      duration_ms: 23
+    - id: verifier-scope-status
+      name:
+        text: Independent tracked and untracked change-scope inspection
+        truncated: false
+      argv_display:
+        - text: status
+          truncated: false
+        - text: --short
+          truncated: false
+        - text: --branch
+          truncated: false
+        - text: --untracked-files=all
+          truncated: false
+      argv_truncated: false
+      cwd_ref: .
+      status: passed
+      exit_code: 0
+      duration_ms: 17
+  summary:
+    text: PASS for all nine scoped acceptance items after independent read-only
+      review of the brief, complete Spec, candidate implementations/tests,
+      historical case snapshots, current documentation, artifacts and Runtime
+      records, followed by corroboration of Builder claims. Reused the 12
+      current candidate-bound passing Runtime checks; requested only two missing
+      read-only Git scope/diff checks, both passed, and inspected their output.
+      No full suite was repeated, no product/formal file edited, and no
+      publication or delivery action performed. No required preparation check
+      remains incomplete; explicitly external signing/Portal/publication
+      prerequisites and the reported whitespace failure remain visible.
+    truncated: false
+  risks:
+    - text: "Unsigned local preparation only: no real-key signing or cryptographic
+        verification, public-key availability/ownership, namespace
+        authorization, Central Portal validation/acceptance, remote
+        tag/release/upload or remote CI execution is established."
+      truncated: false
+    - text: "The original published 0.2.17 reference is a failed build: eight tests,
+        five passes and three characterized failures. Finite
+        public-descriptor/probe coverage and protected-input comparison do not
+        establish exhaustive linkage, all-seed/output/concurrency equivalence,
+        security, legal/provenance or benchmark certification."
+      truncated: false
+    - text: Builder reports git diff --check FAILED with exit 2 and 88 indentation
+        diagnostics; this is retained as a failure, not counted as passed or
+        silently relaxed. Existing compilation/Javadoc, Gradle
+        deprecation/toolchain-discovery and logging-provider warnings remain;
+        the test-only PalDB maintenance limit is unchanged.
+      truncated: false
+    - text: The staged source is deliberately dirty, not a release commit. Generated
+        assets must be rebuilt/reverified for a later authorized final identity.
+        Locally installed untracked .pi bootstrap material must stay outside any
+        future product commit; no commit, push, PR, merge, Archive or cleanup is
+        authorized by this result.
+      truncated: false
+    - text: CodeGraph preparation was unavailable and is not claimed as completed.
+        This is skill-coordinated independent semantic verification, not
+        host-attested independence; result acceptance and all
+        delivery/publication decisions remain separate owner gates.
+      truncated: false
+  risks_truncated: false
+  completed_at: 2026-11-18T16:14:53.598Z
+history:
+  - goal_cycle: 1
+    iteration: 1
+    attempt: 0
+    outcome: recovery
+    unresolved_ids: []
+    summary:
+      text: "Builder handoff Runtime checks failed: java21-examples, java25-examples"
+      truncated: false
+    completed_at: 2026-11-18T08:37:05.303Z
+  - goal_cycle: 1
+    iteration: 2
+    attempt: 0
+    outcome: recovery
+    unresolved_ids: []
+    summary:
+      text: Native confirmed acceptance criteria changed
+      truncated: false
+    completed_at: 2026-11-18T11:12:51.327Z
+  - goal_cycle: 2
+    iteration: 0
+    attempt: 0
+    outcome: recovery
+    unresolved_ids: []
+    summary:
+      text: Native confirmed acceptance criteria changed
+      truncated: false
+    completed_at: 2026-11-18T12:20:54.351Z
+  - goal_cycle: 3
+    iteration: 1
+    attempt: 1
+    outcome: execution-error
+    unresolved_ids: []
+    summary:
+      text: Confirmed no SDK child started. After owner-context reload, read-only
+        select replaced the current transport response; comet_verifier refused
+        with 'No unambiguous Native verifier dispatch in the current response'.
+        Public next --summary recovered continuation but explicitly did not
+        return a dispatch and prescribed recording failure before retrying. Host
+        preflight/dispatch transport error only, not a candidate or check
+        failure. Preserve all12passed Runtime receipts and frozen
+        implementation; recovery must return an official fresh dispatch
+        directly, then call comet_verifier immediately without intervening
+        Native/context calls.
+      truncated: false
+    completed_at: 2026-11-18T16:04:35.587Z
+  - goal_cycle: 3
+    iteration: 1
+    attempt: 1
+    outcome: recovery
+    unresolved_ids: []
+    summary:
+      text: Native check input changed after the candidate was built; a new Builder
+        candidate is required before checks can run again.
+      truncated: false
+    completed_at: 2026-11-18T16:04:49.992Z
+  - goal_cycle: 3
+    iteration: 2
+    attempt: 1
+    outcome: pass
+    unresolved_ids: []
+    summary:
+      text: PASS for all nine scoped acceptance items after independent read-only
+        review of the brief, complete Spec, candidate implementations/tests,
+        historical case snapshots, current documentation, artifacts and Runtime
+        records, followed by corroboration of Builder claims. Reused the 12
+        current candidate-bound passing Runtime checks; requested only two
+        missing read-only Git scope/diff checks, both passed, and inspected
+        their output. No full suite was repeated, no product/formal file edited,
+        and no publication or delivery action performed. No required preparation
+        check remains incomplete; explicitly external signing/Portal/publication
+        prerequisites and the reported whitespace failure remain visible.
+      truncated: false
+    completed_at: 2026-11-18T16:14:53.598Z
+history_overflow:
+  dropped_entries: 0
+  first_dropped_at: null
+  last_dropped_at: null
+  outcome_counts:
+    pass: 0
+    fail: 0
+    blocked: 0
+    execution-error: 0
+    recovery: 0
+verification_result: pass
+verification_report: verification.md
+archived: true
+created_at: 2026-11-17T13:30:08.757Z

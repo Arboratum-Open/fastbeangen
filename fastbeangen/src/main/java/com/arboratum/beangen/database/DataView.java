@@ -50,8 +50,16 @@ public interface DataView<ENTRY> {
         void apply(int index, byte version, UpdateOf<ENTRY> value);
     }
 
-    <T> DataView<T> transformedView(Function<ENTRY, T> transformFunction, Class<T> targetType);
+    default <T> DataView<T> transformedView(Function<ENTRY, T> transformFunction, Class<T> targetType) {
+        return transformedView(transformFunction, targetType, Integer.MAX_VALUE);
+    }
 
-    DataView<ENTRY> filteredView(Predicate<ENTRY> acceptPredicate);
+    <T> DataView<T> transformedView(Function<ENTRY, T> transformFunction, Class<T> targetType, int maxTryPerSelect);
+
+    default DataView<ENTRY> filteredView(Predicate<ENTRY> acceptPredicate) {
+        return filteredView(acceptPredicate, Integer.MAX_VALUE);
+    }
+
+    DataView<ENTRY> filteredView(Predicate<ENTRY> acceptPredicate, int maxTryPerSelect);
 
 }

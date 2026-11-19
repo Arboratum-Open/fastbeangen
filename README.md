@@ -20,9 +20,7 @@ The three modules are `fastbeangen`, `fastbeangen-doc`, and `fastbeangen-example
 **Version 0.3.0 is unreleased.** The following commands prepare and validate a local Maven repository; they do not upload artifacts or make this version available from Maven Central.
 
 ```sh
-python3 -m unittest discover -s verification -p 'test_publication_licenses.py'
-./gradlew --no-daemon --max-workers=1 assemble publishAllPublicationsToLocalRepository
-python3 verification/verify-publication.py
+./gradlew --no-daemon --max-workers=1 -PjavaVersion=21 verificationTest assemble publishAllPublicationsToLocalRepository verifyPublication
 ./gradlew --project-dir verification/consumer --no-daemon -PjavaVersion=21 run
 ```
 
@@ -60,13 +58,25 @@ For Maven, configure that same local file repository and use a normal JAR depend
 
 Maven Central is the intended release destination. Remove the local repository only after a release is actually published. Signing, namespace authorization and upload remain separate release prerequisites; see [publication preparation](docs/modernization.md#publication-preparation).
 
+The [0.3.0 release notes and checklist](docs/releases/0.3.0.md) cover migration from the actual published 0.2.17 API, including bounded views, initial-entry provenance, entry-aware deletion and reference-aware updates. They distinguish the published reference's known defects from passing compatibility checks.
+
+After local publication, prepare and inspect the unsigned GitHub asset set:
+
+```sh
+./gradlew --no-daemon --max-workers=1 -PjavaVersion=21 stageRelease verifyRelease
+```
+
+Outputs are confined to `build/release/0.3.0/`, with a source/artifact identity manifest and SHA-256 checksums. No tag, draft/release or upload is created. The Central bundle is a separate, signed path; unsigned local success does not establish key ownership, namespace rights or Portal acceptance.
+
 ## Examples
 
 ```sh
-python3 verification/verify-examples.py 21
+./gradlew --no-daemon --max-workers=1 -PjavaVersion=21 verifyExamples
 ```
 
-This runs the existing SQL generation, query, CUD and CSV entry points with bounded inputs/durations and embedded HSQLDB. It verifies successful results, not just process exit codes. The query phase takes one minute. No separately provisioned database is needed.
+This Gradle-driven Java/JUnit check runs the existing SQL generation, query, CUD and CSV entry points with bounded inputs/durations and embedded HSQLDB. It verifies successful results, not just process exit codes, within the unchanged shared 180-second deadline. The query phase takes one minute. The CUD example uses its existing 20 operations/second limiter and warm-up before processing each operation; six checkpoints and all CSV assertions remain unchanged. No separately provisioned database is needed.
+
+All verification tests are Java/JUnit driven by Gradle, including publication/license/release guards; no Python runtime is required. See [verification commands and case mapping](verification/README.md) for the migrated guards and reference/signing checks. The verification sources are build-only, not a fourth application module or another publication.
 
 ## License
 

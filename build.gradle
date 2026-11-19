@@ -1,4 +1,5 @@
 plugins {
+    id 'java-base'
     id 'org.springframework.boot' version '4.1.2' apply false
     id 'se.bjurr.gitchangelog.git-changelog-gradle-plugin' version '3.4.2'
 }
@@ -84,24 +85,102 @@ configure(subprojects.findAll { it.name != 'fastbeangen-example' }) {
     }
     signing {
         def key = providers.environmentVariable('SIGNING_KEY')
-        if (key.present) {
+        if (key.present && !key.get().isBlank()) {
             useInMemoryPgpKeys(key.get(), providers.environmentVariable('SIGNING_PASSWORD').getOrElse(''))
             sign publishing.publications.mavenJava
         }
     }
 }
 
+def verificationJavaVersion = JavaLanguageVersion.of(providers.gradleProperty('javaVersion').getOrElse('21').toInteger())
+java { toolchain { languageVersion = verificationJavaVersion } }
+sourceSets {
+    verification { java.srcDir 'verification/src/main/java' }
+    verificationTest {
+        java.srcDir 'verification/src/test/java'
+        compileClasspath += sourceSets.verification.output
+        runtimeClasspath += sourceSets.verification.output
+    }
+}
+configurations.verificationTestImplementation.extendsFrom(configurations.verificationImplementation)
+configurations.verificationTestRuntimeOnly.extendsFrom(configurations.verificationRuntimeOnly)
+repositories { mavenCentral() }
+dependencies {
+    // Build-only JSON/ZIP facilities already supplied by Gradle; never library dependencies.
+    verificationImplementation fileTree(dir: new File(gradle.gradleHomeDir, 'lib'), include: ['ant-*.jar'])
+    verificationImplementation localGroovy()
+    verificationImplementation 'com.opencsv:opencsv:5.12.0'
+    verificationTestImplementation 'junit:junit:4.13.2'
+}
+tasks.withType(JavaCompile).configureEach {
+    options.release = 21
+    options.encoding = 'UTF-8'
+}
+tasks.withType(Test).configureEach {
+    useJUnit()
+    javaLauncher = javaToolchains.launcherFor { languageVersion = verificationJavaVersion }
+    testClassesDirs = sourceSets.verificationTest.output.classesDirs
+    classpath = sourceSets.verificationTest.runtimeClasspath
+    systemProperty 'fastbeangen.root', rootDir.absolutePath
+    systemProperty 'fastbeangen.javaVersion', verificationJavaVersion.asInt()
+    maxHeapSize = '1g'
+}
+tasks.register('verificationTest', Test) {
+    description = 'Run Java/JUnit publication and release guard regressions.'
+    exclude '**/*IntegrationTest.class'
+}
+tasks.named('check') { dependsOn 'verificationTest' }
+
+def localPublications = [':fastbeangen:publishAllPublicationsToLocalRepository', ':fastbeangen-doc:publishAllPublicationsToLocalRepository']
+tasks.register('verifyPublication', Test) {
+    dependsOn localPublications, ':fastbeangen-example:assemble'
+    include '**/PublicationIntegrationTest.class'
+    outputs.upToDateWhen { false }
+}
+tasks.register('verifyReference', Test) {
+    description = 'Compare pinned published APIs/protected inputs and characterize the original Java 21 failures.'
+    dependsOn localPublications
+    include '**/ReferenceIntegrationTest.class'
+    outputs.upToDateWhen { false }
+}
+tasks.register('verifySigningGuards', Test) {
+    include '**/SigningIntegrationTest.class'
+    outputs.upToDateWhen { false }
+}
+tasks.register('verifyExamples', Test) {
+    dependsOn ':fastbeangen-example:classes'
+    include '**/ExamplesIntegrationTest.class'
+    doFirst {
+        systemProperty 'fastbeangen.exampleJava', javaLauncher.get().executablePath.asFile.absolutePath
+        systemProperty 'fastbeangen.exampleClasspath', project(':fastbeangen-example').sourceSets.main.runtimeClasspath.asPath
+    }
+    outputs.upToDateWhen { false }
+}
+['stageRelease': 'stage', 'verifyRelease': 'verify', 'verifyCentralInputs': 'central-inputs', 'verifyCentralBundle': 'central-bundle'].each { taskName, action ->
+    tasks.register(taskName, JavaExec) {
+        dependsOn localPublications
+        javaLauncher = javaToolchains.launcherFor { languageVersion = verificationJavaVersion }
+        classpath = sourceSets.verification.runtimeClasspath
+        mainClass = 'com.arboratum.beangen.verification.ReleaseVerification'
+        systemProperty 'fastbeangen.root', rootDir.absolutePath
+        args action
+    }
+}
+tasks.named('verifyCentralInputs') {
+    doFirst {
+        if (providers.environmentVariable('SIGNING_KEY').getOrElse('').isBlank()) {
+            throw new GradleException('SIGNING_KEY is required for a signed Central bundle; local publication checks do not need it.')
+        }
+    }
+}
+
 tasks.register('bundleCentral', Zip) {
-    dependsOn ':fastbeangen:publishAllPublicationsToLocalRepository', ':fastbeangen-doc:publishAllPublicationsToLocalRepository'
+    dependsOn 'verifyCentralInputs'
     archiveFileName = 'fastbeangen-central.zip'
     destinationDirectory = layout.buildDirectory.dir('distributions')
     from(layout.buildDirectory.dir('repository')) {
-        include "com/arboratum/*/${project(':fastbeangen').version}/**"
-    }
-    doFirst {
-        if (!providers.environmentVariable('SIGNING_KEY').present) {
-            throw new GradleException('SIGNING_KEY is required for a signed Central bundle; local publication checks do not need it.')
-        }
+        include "com/arboratum/fastbeangen/${project(':fastbeangen').version}/**"
+        include "com/arboratum/fastbeangen-doc/${project(':fastbeangen-doc').version}/**"
     }
 }
 

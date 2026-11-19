@@ -51,6 +51,14 @@ Commons Math and test-only PalDB retain their available stable versions; this is
 - Updates continue to mutate generated entries in place. This change does not add immutable-entry update semantics.
 - Obsolete HTML `<tt>` Javadoc tags were replaced by `{@code ...}`. Javadoc validation remains enabled. Existing missing-comment warnings do not mean the API is comprehensively documented or warning-free.
 
+## Published 0.2.17 API restoration
+
+The published 0.2.17 artifacts are not identical to the Git modernization baseline below. Release preparation restores their bounded filtered/transformed-view overloads, initial-entry provenance and entry-aware deletion/reference-aware update hooks. The published deletion predicate receives `Entry<T>`, not the unpublished Git variant's raw `T`; adapt value-based predicates explicitly. The existing pre-release one-argument update hook is retained through the new default bridge. See the [release migration notes](releases/0.3.0.md#migrating-from-published-0217).
+
+The same eight fixed tests execute against the official binary with its original published runtime dependencies on actual Java 21: five pass, while three expose composed/transformed-view null-lock/budget defects and incorrect initial provenance after deleted slots. These three defects are corrected under the confirmed release contract; the reference remains a failed reference for those cases, not a passing comparison. Pinned artifact hashes and reproduction instructions are in [the reference harness](../verification/published-compatibility/README.md). A finite public-descriptor comparison covered 358 descriptors across 59 public classes with no missing candidate descriptor, accounting for inherited `DataView` methods; it does not certify every linkage, dependency or runtime scenario.
+
+Existing generated-value fixtures, PRNG, data/templates and test tolerances remain unchanged. The new tests supplement rather than replace them. Correcting these API/selection/provenance defects is not blanket acceptance of changed generated values.
+
 ## Historical references and approved legacy repair
 
 Baseline: `7cfaf9bfb699f38f02d5cb87cfe81fe162348c47`.
@@ -70,11 +78,11 @@ Coverage is finite. The self-created `working` / `working-mathcing` files in old
 ## Bounded examples and CI
 
 ```sh
-python3 verification/verify-examples.py 21
-python3 verification/verify-examples.py 25
+./gradlew --no-daemon --console=plain --max-workers=1 -PjavaVersion=21 verifyExamples
+./gradlew --no-daemon --console=plain --max-workers=1 -PjavaVersion=25 verifyExamples
 ```
 
-The verifier runs the existing entry points with embedded HSQLDB: 10 initial persons per country for generation/query/CUD, zero relations for that SQL fixture, a one-minute query phase, and six one-second CUD batches. The CSV fixture uses 10,000 persons per country and 20 relations. It checks successful query/CUD groups, exactly six CUD checkpoints, 20,000 exported person IDs, 20 relation IDs and 47 valid relationship links. Workloads are bounded; no external database/service is required. Generated SQL/CSV files are confined to the example's build directory. These commands recreate those demo outputs; do not use that directory for personal data.
+The Java/JUnit verifier, launched by Gradle, runs the existing entry points with embedded HSQLDB and one unchanged shared 180-second execution deadline: 10 initial persons per country for generation/query/CUD, zero relations for that SQL fixture, a one-minute query phase, and six CUD checkpoints using the existing one-second buffer windows. The CUD example now consumes its already supplied 20 operations/second RateLimiter with the existing five-second warm-up before processing each operation. Per-wall-clock operation counts and batch sizes intentionally change; identical asynchronous interleavings are not promised. An earlier same-Mac/Java-21 probe also reproduced unpaced growth using the seven exact base-commit database classes with unchanged remaining classes/dependencies; that was a focused characterization, not a passing complete historical build or proof that the API patch caused the slowdown. Library pacing, PRNG and acknowledgement/backpressure/cancellation are unchanged. The CSV fixture uses 10,000 persons per country and 20 relations. It checks successful query/CUD groups, exactly six CUD checkpoints, 20,000 exported person IDs, 20 relation IDs and 47 valid relationship links. Workloads are bounded; no external database/service is required. Generated SQL/CSV files are confined to the example's build directory. These commands recreate those demo outputs; do not use that directory for personal data.
 
 `.github/workflows/ci.yml` declares Java 21/25 jobs for build/tests, local publication, independent dependency consumption and the bounded examples. Official checkout/setup-java actions are pinned to release commits. No release/upload job or secrets are configured. A configured matrix is not evidence that a remote CI run occurred; actual execution results belong in the corresponding verification records. This local preparation does not push a branch or trigger remote CI.
 
@@ -83,17 +91,18 @@ The verifier runs the existing entry points with embedded HSQLDB: 10 initial per
 The intended coordinates remain `com.arboratum:fastbeangen:0.3.0` and `com.arboratum:fastbeangen-doc:0.3.0`. **0.3.0 is unreleased, not remotely available as a result of this change.** The current first-party grant is **LGPL-3.0-only**, superseding the modernization's former GPL-only status. Both the LGPL text in [LICENSE](../LICENSE) and its incorporated GPL v3 terms in [COPYING](../COPYING) are distributed. Third-party notices and previously granted GPL rights remain unchanged; see the [license and distribution conditions](../README.md#license).
 
 ```sh
-python3 -m unittest discover -s verification -p 'test_publication_licenses.py'
-./gradlew --no-daemon --max-workers=1 assemble publishAllPublicationsToLocalRepository
-python3 verification/verify-publication.py
+./gradlew --no-daemon --max-workers=1 -PjavaVersion=21 verificationTest assemble publishAllPublicationsToLocalRepository verifyPublication
+./gradlew --no-daemon --max-workers=1 -PjavaVersion=21 verifyReference verifySigningGuards
 ./gradlew --project-dir verification/consumer --no-daemon -PjavaVersion=21 run
 ./gradlew --project-dir verification/consumer --no-daemon -PjavaVersion=25 run
 ```
+
+The [0.3.0 release notes/checklist](releases/0.3.0.md) describe local asset staging (`./gradlew stageRelease verifyRelease`) and the later authorized GitHub/Central steps. All active verification is Java/JUnit driven by Gradle; see the [case mapping and task reference](../verification/README.md). The verification source sets reuse Gradle-provided JSON/Ant ZIP facilities and the already used JUnit/OpenCSV versions; none becomes a published library dependency. The Java tests retain all cases from the former 24 guard methods, including hardlink backup preservation and ZIP-directory payload rejection. Generated assets under `build/release/0.3.0/` include only the two libraries' binary/sources/Javadoc JARs, POMs, notes and integrity/identity manifests. Existing corrupt, foreign or linked staging input is rejected rather than overwritten. Stage again after legitimate source or publication changes; a dirty source identity is not a final release commit.
 
 The build only configures a local Maven repository at `build/repository`. It produces core/document binaries, sources, Javadoc, POMs, Gradle module metadata and checksums. The publication verifier checks artifact contents, Java 21 classfile/variant targets, SHA-256 values, coordinates and license/developer/SCM metadata. It requires the exact LGPL-3.0-only POM grant and exact LGPL/GPL texts in the repository and every published binary/sources/Javadoc JAR, as well as the example JARs built by `assemble`. Its focused self-checks reject wrong grants/URLs, multiple licenses, and missing, modified or duplicated legal texts. The separate consumer forces the `com.arboratum` group to resolve locally, then compiles/runs against published dependencies and generates readable DOCX/XLSX content. It explicitly reads Maven POM metadata instead of relying on Gradle metadata redirection. It does not use a project dependency or silently fall back to a remote FastBeanGen release.
 
 Ordinary checks require no signing credentials. If `SIGNING_KEY` is injected, Gradle uses that ASCII-armored private key in memory, with optional `SIGNING_PASSWORD`, to sign the publications. Do not commit keys or expose them in command history/logs. To explicitly validate unsigned local output in an environment that already has signing variables, use `env -u SIGNING_KEY -u SIGNING_PASSWORD ./gradlew publishAllPublicationsToLocalRepository` on Unix.
 
-A later authorized operator can securely inject those variables and run `./gradlew bundleCentral` to create `build/distributions/fastbeangen-central.zip`. The bundle task refuses unsigned operation; it is not an uploader. Before any real release, verify signing-key ownership, namespace authorization for `com.arboratum`, Central Portal token/access and the signed bundle's actual acceptance. Those rights, real-key signing and portal acceptance are not verified by unsigned local checks.
+A later authorized operator can securely inject those variables and run `./gradlew bundleCentral` to create `build/distributions/fastbeangen-central.zip`. The bundle task refuses missing/blank/unusable signing input and validates the two intended Maven version directories, signature presence/armor, legal metadata/content and required MD5/SHA-1 checksums; it is not an uploader. Run `./gradlew verifyCentralBundle` afterward to compare the ZIP's exact entries/content with the signed local inputs. These are structural checks, not cryptographic signature verification; every real signature and its intended public-key fingerprint still need verification before upload. Before any real release, verify signing-key ownership, namespace authorization for `com.arboratum`, Central Portal token/access and the signed bundle's actual acceptance. Those rights, real-key signing and portal acceptance are not verified by unsigned local checks.
 
 Use the [Central Portal publishing documentation](https://central.sonatype.org/publish/publish-portal-api/) for the separately authorized upload. No remote publication repository, token, automatic upload, push, PR, merge or release publication is configured or performed here.

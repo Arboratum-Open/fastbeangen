@@ -168,18 +168,18 @@ class UnionDataView<T> implements DataView<T> {
     }
 
     @Override
-    public <U> DataView<U> transformedView(Function<T, U> transformFunction, Class<U> targetType) {
+    public <U> DataView<U> transformedView(Function<T, U> transformFunction, Class<U> targetType, int maxTryPerSelect) {
         final DataView<U>[] newChildren = Arrays.stream(children)
-                .map(v -> v.transformedView(transformFunction, targetType))
+                .map(v -> v.transformedView(transformFunction, targetType, maxTryPerSelect))
                 .toArray(DataView[]::new);
 
         return new UnionDataView<>(name + "T", targetType, newChildren);
     }
 
     @Override
-    public DataView<T> filteredView(Predicate<T> acceptPredicate) {
+    public DataView<T> filteredView(Predicate<T> acceptPredicate, int maxTryPerSelect) {
         final DataView<T>[] newChildren = Arrays.stream(children)
-                .map(v -> v.filteredView(acceptPredicate))
+                .map(v -> v.filteredView(acceptPredicate, maxTryPerSelect))
                 .toArray(DataView[]::new);
         return new UnionDataView<>(name + "F", getEntryType(), newChildren);
     }

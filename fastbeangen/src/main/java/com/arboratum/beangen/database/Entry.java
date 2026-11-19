@@ -16,6 +16,8 @@ public interface Entry<ENTRY> {
 
     boolean isDeleted();
 
+    boolean wasInInitialDataSet();
+
     int getElementIndex();
 
     byte getElementVersion();

@@ -50,7 +50,7 @@ public strictfp class DataSetBuilder<T> {
     private List<DataSet.UpdateTrigger<T>> updateTriggers = new ArrayList<>();
     private Scheduler scheduler = Schedulers.boundedElastic();
     private Predicate<T> creationCheck;
-    private Predicate<T> deletionCheck;
+    private Predicate<Entry<T>> deletionCheck;
     private String name;
 
     DataSetBuilder<T> withName(String name) {
@@ -95,7 +95,7 @@ public strictfp class DataSetBuilder<T> {
         return this;
     }
 
-    public DataSetBuilder<T> withDeletionCheck(Predicate<T> deletionCheck) {
+    public DataSetBuilder<T> withDeletionCheck(Predicate<Entry<T>> deletionCheck) {
         this.deletionCheck = deletionCheck;
         return this;
     }
