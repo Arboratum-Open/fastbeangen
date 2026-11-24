@@ -1,0 +1,12 @@
+schema: comet.native.delta.v1
+capability: modern-java-build
+base_hash: 1669cc4cccff23336e6a8a1ce8c4f4190b5cd3beeed1a2c028f3fae6c12ed195
+base_version: 1
+legacy_hash: 7fc87c651f92a73bfe5370b4f612e9c99926bb638a694ea7c4158e016b251a83
+base_requirements:
+  bounded-cud-example-cadence: f58a6d2364053511de99eaeadf2a5da5e15f2d24c81e810eaf5e528b107a9043
+  java-gradle-verification: da1d2cfbcbe470f1e7c100c9538941a7b47666643a2caf8a77865bebe645943f
+  project-licensing: 28200c1bf03da7749eee097f61dd94fa1905958dcb06ec6937e054a67158bd7e
+  published-0217-compatibility: a610a4443ddb70c409583f34e336e2da9b4e71dbf4be85a45581a711b90385f1
+  release-030-preparation: 895e0c7538a787d78e3dd5b14468abb3a4f90defcfea02a1d0e52ef816ff7535
+operations: []

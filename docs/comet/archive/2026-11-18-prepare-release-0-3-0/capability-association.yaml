@@ -1,0 +1,82 @@
+schema: comet.capability-association.v1
+status: suggested
+workflow: native
+capability: modern-java-build
+current_spec: docs/comet/specs/modern-java-build/spec.md
+current_hash: 697f467bbb32f048cc4b6840cb10f3b3cf087578e7812a656251a0e92baa5611
+confidence: high
+query: prépare une release
+reason: 当前总 Spec 已命中，并找到 2 个历史来源；已核对当前能力文件，匹配 5 个查询词（high）
+historical_sources:
+  - docs/comet/archive/2026-11-11-modernize-java-21/specs/modern-java-build/spec.md
+  - docs/comet/archive/2026-11-16-relicense-lgpl-3/specs/modern-java-build/spec.md
+evidence:
+  - source: docs/comet/specs/modern-java-build/spec.md
+    kind: native-spec
+    title: FastBeanGen modern Java build and compatibility contract
+    snippet: >-
+      # FastBeanGen modern Java build and compatibility contract
+
+
+      ## Purpose and supported project
+
+
+      FastBeanGen is a deterministic pseudo-random data-generation library with
+      its existing core module, executable examples, and document-generation
+      module. The supported project consists of `fastbeangen`,
+      `fastbeangen-example`, and `fastbeangen-doc`, built together with the
+      repository's Gradle wrapper. This capability modernizes the technical
+      platform without adding generator functions or replacing the existing
+      project architecture.
+
+
+      ## Java and Gradle support
+
+
+      The minimum supported consumer runtime is J
+  - source: docs/comet/archive/2026-11-11-modernize-java-21/specs/modern-java-build/spec.md
+    kind: native-archive
+    title: FastBeanGen modern Java build and compatibility contract
+    snippet: >-
+      # FastBeanGen modern Java build and compatibility contract
+
+
+      ## Purpose and supported project
+
+
+      FastBeanGen is a deterministic pseudo-random data-generation library with
+      its existing core module, executable examples, and document-generation
+      module. The supported project consists of `fastbeangen`,
+      `fastbeangen-example`, and `fastbeangen-doc`, built together with the
+      repository's Gradle wrapper. This capability modernizes the technical
+      platform without adding generator functions or replacing the existing
+      project architecture.
+
+
+      ## Java and Gradle support
+
+
+      The minimum supported consumer runtime is J
+  - source: docs/comet/archive/2026-11-16-relicense-lgpl-3/specs/modern-java-build/spec.md
+    kind: native-archive
+    title: FastBeanGen modern Java build and compatibility contract
+    snippet: >-
+      # FastBeanGen modern Java build and compatibility contract
+
+
+      ## Purpose and supported project
+
+
+      FastBeanGen is a deterministic pseudo-random data-generation library with
+      its existing core module, executable examples, and document-generation
+      module. The supported project consists of `fastbeangen`,
+      `fastbeangen-example`, and `fastbeangen-doc`, built together with the
+      repository's Gradle wrapper. This capability modernizes the technical
+      platform without adding generator functions or replacing the existing
+      project architecture.
+
+
+      ## Java and Gradle support
+
+
+      The minimum supported consumer runtime is J

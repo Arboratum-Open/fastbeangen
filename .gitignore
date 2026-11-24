@@ -20,3 +20,9 @@ CHANGELOG_tmp.md
 working
 working-mathcing
 out/
+/.pi/
+# >>> Comet managed project state >>>
+!/.comet/
+/.comet/*
+!/.comet/config.yaml
+# <<< Comet managed project state <<<

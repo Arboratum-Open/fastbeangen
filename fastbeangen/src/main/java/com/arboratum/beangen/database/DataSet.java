@@ -32,7 +32,7 @@ public class DataSet<ENTRY> implements DataView<ENTRY> {
     private final String name;
     private final Generator<ENTRY> entryGenerator;
     private final Predicate<ENTRY> creationCheck;
-    private final Predicate<ENTRY> deletionCheck;
+    private final Predicate<Entry<ENTRY>> deletionCheck;
     private final UpdateGenerator<ENTRY>[] updateGenerators;
     private final Generator<Integer> updateGeneratorsIndexGenerator;
     private final CreateTrigger<ENTRY>[] createTriggers;
@@ -40,6 +40,7 @@ public class DataSet<ENTRY> implements DataView<ENTRY> {
     private final Scheduler scheduler;
     private final int offset;
     private final int numUpdateGenerators;
+    private final int numInitialEntries;
     private FilteredDataView[] filteredViews;
 
 
@@ -106,6 +107,10 @@ public class DataSet<ENTRY> implements DataView<ENTRY> {
 
         public Entry<ENTRY> getCurrent() {
             return dataSet.get(elementIndex);
+        }
+
+        public boolean wasInInitialDataSet() {
+            return elementIndex < dataSet.numInitialEntries;
         }
 
         @Override
@@ -175,7 +180,7 @@ public class DataSet<ENTRY> implements DataView<ENTRY> {
                     for (int j = 0; j < numUpdateGenerators; j++) {
                         updateGeneratorIndex = (j + rootId) % numUpdateGenerators;
                         updateGenerator = updateGenerators[updateGeneratorIndex];
-                        if (updateGenerator.canApplyOn(value)) {
+                        if (updateGenerator.canApplyOn(value, new EntryRef<>(elementIndex, DataSet.this))) {
                             break;
                         } else {
                             updateGenerator = null;
@@ -213,6 +218,11 @@ public class DataSet<ENTRY> implements DataView<ENTRY> {
         @Override
         public boolean isDeleted() {
             return elementVersion <= 0;
+        }
+
+        @Override
+        public boolean wasInInitialDataSet() {
+            return elementIndex < numInitialEntries;
         }
 
         @Override
@@ -318,13 +328,15 @@ public class DataSet<ENTRY> implements DataView<ENTRY> {
 
     private boolean feedBuilt =  false;
 
-    DataSet(String name, Generator<OpCode> operationGenerator, Predicate<ENTRY> creationCheck, Predicate<ENTRY> deletionCheck, byte[] versions, int lastIndex, Generator<ENTRY> entryGenerator, List<DataSetBuilder.WeightedUpdateGenerator<ENTRY>> updateGenerators, CreateTrigger<ENTRY>[] createTriggers, UpdateTrigger<ENTRY>[] updateTriggers, Scheduler scheduler, int offset) {
+    DataSet(String name, Generator<OpCode> operationGenerator, Predicate<ENTRY> creationCheck, Predicate<Entry<ENTRY>> deletionCheck, byte[] versions, int lastIndex, Generator<ENTRY> entryGenerator, List<DataSetBuilder.WeightedUpdateGenerator<ENTRY>> updateGenerators, CreateTrigger<ENTRY>[] createTriggers, UpdateTrigger<ENTRY>[] updateTriggers, Scheduler scheduler, int offset) {
         this.name = name;
         this.creationCheck = creationCheck;
         this.deletionCheck = deletionCheck;
         this.entryGenerator = entryGenerator;
         this.versions = versions;
         this.lastIndex = lastIndex;
+        // Initial indices include deleted slots, not only the requested live count.
+        this.numInitialEntries = lastIndex + 1;
         this.size = countActive(versions);
         this.operationGenerator = operationGenerator;
         this.updateGenerators = updateGenerators.stream().map(DataSetBuilder.WeightedUpdateGenerator::getUpdateGenerator).toArray(UpdateGenerator[]::new);
@@ -504,7 +516,7 @@ public class DataSet<ENTRY> implements DataView<ENTRY> {
                                     EntryImpl entry = new EntryImpl(select, version);
 
                                     if (deletionCheck != null) {
-                                        while (entry != null && !deletionCheck.test(entry.lastVersion().block())) {
+                                        while (entry != null && !deletionCheck.test(entry)) {
                                             if (state.size == 0) {
                                                 entry = null;
                                             } else {
@@ -569,13 +581,13 @@ public class DataSet<ENTRY> implements DataView<ENTRY> {
     }
 
     @Override
-    public <T> DataView<T> transformedView(Function<ENTRY, T> transformFunction, Class<T> targetType) {
-        return FilteredDataView.createTransformedDataSet(this, transformFunction, targetType);
+    public <T> DataView<T> transformedView(Function<ENTRY, T> transformFunction, Class<T> targetType, int maxTryPerSelect) {
+        return FilteredDataView.createTransformedDataSet(this, transformFunction, targetType, maxTryPerSelect);
     }
 
     @Override
-    public DataView<ENTRY> filteredView(Predicate<ENTRY> acceptPredicate) {
-        return FilteredDataView.createFilteredDataSet(this, acceptPredicate);
+    public DataView<ENTRY> filteredView(Predicate<ENTRY> acceptPredicate, int maxTryPerSelect) {
+        return FilteredDataView.createFilteredDataSet(this, acceptPredicate, maxTryPerSelect);
     }
 
 }

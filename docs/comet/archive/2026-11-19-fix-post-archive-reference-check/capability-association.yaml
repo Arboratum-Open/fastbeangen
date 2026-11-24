@@ -1,0 +1,108 @@
+schema: comet.capability-association.v1
+status: suggested
+workflow: native
+capability: modern-java-build
+current_spec: docs/comet/specs/modern-java-build/spec.md
+current_hash: 1669cc4cccff23336e6a8a1ce8c4f4190b5cd3beeed1a2c028f3fae6c12ed195
+confidence: high
+query: Fix the FastBeanGen 0.3.0 PR CI protection check after legitimate Native
+  Spec publication, preserving all historical input assertions and rejecting
+  unapproved changes
+reason: 当前总 Spec 已命中，并找到 3 个历史来源；已核对当前能力文件，匹配 14 个查询词（high）
+historical_sources:
+  - docs/comet/archive/2026-11-11-modernize-java-21/specs/modern-java-build/spec.md
+  - docs/comet/archive/2026-11-16-relicense-lgpl-3/specs/modern-java-build/spec.md
+  - docs/comet/archive/2026-11-18-prepare-release-0-3-0/specs/modern-java-build/spec.md
+evidence:
+  - source: docs/comet/specs/modern-java-build/spec.md
+    kind: native-spec
+    title: FastBeanGen modern Java build and compatibility contract
+    snippet: >-
+      # FastBeanGen modern Java build and compatibility contract
+
+
+      ## Purpose and supported project
+
+
+      FastBeanGen is a deterministic pseudo-random data-generation library with
+      its existing core module, executable examples, and document-generation
+      module. The supported project consists of `fastbeangen`,
+      `fastbeangen-example`, and `fastbeangen-doc`, built together with the
+      repository's Gradle wrapper. This capability modernizes the technical
+      platform without adding generator functions or replacing the existing
+      project architecture.
+
+
+      ## Java and Gradle support
+
+
+      The minimum supported consumer runtime is J
+  - source: docs/comet/archive/2026-11-11-modernize-java-21/specs/modern-java-build/spec.md
+    kind: native-archive
+    title: FastBeanGen modern Java build and compatibility contract
+    snippet: >-
+      # FastBeanGen modern Java build and compatibility contract
+
+
+      ## Purpose and supported project
+
+
+      FastBeanGen is a deterministic pseudo-random data-generation library with
+      its existing core module, executable examples, and document-generation
+      module. The supported project consists of `fastbeangen`,
+      `fastbeangen-example`, and `fastbeangen-doc`, built together with the
+      repository's Gradle wrapper. This capability modernizes the technical
+      platform without adding generator functions or replacing the existing
+      project architecture.
+
+
+      ## Java and Gradle support
+
+
+      The minimum supported consumer runtime is J
+  - source: docs/comet/archive/2026-11-16-relicense-lgpl-3/specs/modern-java-build/spec.md
+    kind: native-archive
+    title: FastBeanGen modern Java build and compatibility contract
+    snippet: >-
+      # FastBeanGen modern Java build and compatibility contract
+
+
+      ## Purpose and supported project
+
+
+      FastBeanGen is a deterministic pseudo-random data-generation library with
+      its existing core module, executable examples, and document-generation
+      module. The supported project consists of `fastbeangen`,
+      `fastbeangen-example`, and `fastbeangen-doc`, built together with the
+      repository's Gradle wrapper. This capability modernizes the technical
+      platform without adding generator functions or replacing the existing
+      project architecture.
+
+
+      ## Java and Gradle support
+
+
+      The minimum supported consumer runtime is J
+  - source: docs/comet/archive/2026-11-18-prepare-release-0-3-0/specs/modern-java-build/spec.md
+    kind: native-archive
+    title: FastBeanGen modern Java build and compatibility contract
+    snippet: >-
+      # FastBeanGen modern Java build and compatibility contract
+
+
+      ## Purpose and supported project
+
+
+      FastBeanGen is a deterministic pseudo-random data-generation library with
+      its existing core module, executable examples, and document-generation
+      module. The supported project consists of `fastbeangen`,
+      `fastbeangen-example`, and `fastbeangen-doc`, built together with the
+      repository's Gradle wrapper. This capability modernizes the technical
+      platform without adding generator functions or replacing the existing
+      project architecture.
+
+
+      ## Java and Gradle support
+
+
+      The minimum supported consumer runtime is J

@@ -10,4 +10,8 @@ public interface UpdateGenerator<ENTRY> {
     UpdateOf<ENTRY> generate(ENTRY previousValue, RandomSequence randomSequence);
 
     default boolean canApplyOn(ENTRY value) { return true; };
+
+    default boolean canApplyOn(ENTRY value, DataSet.EntryRef<ENTRY> ref) {
+        return canApplyOn(value);
+    }
 }

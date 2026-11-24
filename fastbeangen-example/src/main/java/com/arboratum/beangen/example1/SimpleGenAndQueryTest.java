@@ -182,6 +182,7 @@ public class SimpleGenAndQueryTest {
 
         return cuds
                 .map(operation -> {
+                    rateLimiter.acquire();
                     Stopwatch stopwatch = Stopwatch.createStarted();
 
                     try {
