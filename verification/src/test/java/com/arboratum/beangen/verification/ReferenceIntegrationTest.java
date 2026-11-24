@@ -15,6 +15,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -30,7 +31,18 @@ import static com.arboratum.beangen.verification.ReleaseVerification.nulNames;
 import static org.junit.Assert.*;
 
 public class ReferenceIntegrationTest {
-    private static final String BASE = "4a267527c030a1016c113714fc334c2c4844cbdd";
+    static final String BASE = "4a267527c030a1016c113714fc334c2c4844cbdd";
+    static final String PROTECTED_SPEC = "docs/comet/specs/modern-java-build/spec.md";
+
+    static void assertProtectedInput(String name, byte[] original, byte[] current) {
+        if (name.equals(PROTECTED_SPEC) && !Arrays.equals(original, current)) {
+            assertEquals("Approved published Spec length", 19515, current.length);
+            assertArrayEquals("Historical Spec prefix", original, Arrays.copyOf(current, original.length));
+            assertEquals("Approved published Spec SHA-256", "1669cc4cccff23336e6a8a1ce8c4f4190b5cd3beeed1a2c028f3fae6c12ed195", digest(current));
+        } else {
+            assertArrayEquals("Protected input: " + name, original, current);
+        }
+    }
 
     private Map<String, Path> referenceArtifacts() throws Exception {
         var pins = json(Files.readAllBytes(ROOT.resolve("verification/published-compatibility/reference.json")));
@@ -128,9 +140,10 @@ public class ReferenceIntegrationTest {
         var process = new ProcessBuilder("git", "-C", ROOT.toString(), "cat-file", "--batch")
                 .redirectError(ProcessBuilder.Redirect.INHERIT).start();
         int count = 0;
+        int publishedSpecs = 0;
         try (var input = new BufferedInputStream(process.getInputStream()); var requests = process.getOutputStream()) {
             for (String name : paths) {
-                boolean protectedPath = name.startsWith("docs/comet/archive/") || name.equals("docs/comet/specs/modern-java-build/spec.md")
+                boolean protectedPath = name.startsWith("docs/comet/archive/") || name.equals(PROTECTED_SPEC)
                         || Set.of("LICENSE", "COPYING", "settings.gradle", "gradle/wrapper/gradle-wrapper.jar", "gradle/wrapper/gradle-wrapper.properties").contains(name);
                 for (String module : List.of("fastbeangen", "fastbeangen-doc", "fastbeangen-example")) {
                     if (name.startsWith(module + "/src/") || name.equals(module + "/build.gradle")) protectedPath = true;
@@ -152,7 +165,9 @@ public class ReferenceIntegrationTest {
                 byte[] original = input.readNBytes(length);
                 assertEquals(length, original.length);
                 assertEquals('\n', input.read());
-                assertArrayEquals("Protected input: " + name, original, Files.readAllBytes(ROOT.resolve(name)));
+                byte[] current = Files.readAllBytes(ROOT.resolve(name));
+                assertProtectedInput(name, original, current);
+                if (name.equals(PROTECTED_SPEC) && !Arrays.equals(original, current)) publishedSpecs++;
                 count++;
             }
         } finally {
@@ -161,7 +176,7 @@ public class ReferenceIntegrationTest {
             process.waitFor();
         }
         assertTrue("Unexpectedly empty protection boundary", count > 200);
-        System.out.println("Protected source/test/resource/build/legal/archive inputs byte-identical to " + BASE + ": " + count + "; seven database classes and the explicitly authorized CUD caller excluded.");
+        System.out.println("Protected inputs from " + BASE + ": " + count + " checked; " + (count - publishedSpecs) + " fully byte-identical; " + publishedSpecs + " exact approved published Spec with unchanged historical prefix; seven database classes and the explicitly authorized CUD caller excluded.");
     }
 
     @Test public void published_runtime_reference_has_exactly_the_three_characterized_failures() throws Exception {
