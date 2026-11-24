@@ -1,0 +1,644 @@
+schema: comet.native.v4
+name: fix-post-archive-reference-check
+language: en
+phase: archive
+status: done
+state_version: 8
+brief: brief.md
+document_constraints_version: 3
+shape_confirmation_hash: 2fa2ddfe647f25f06ceca8ba2cc41fc0dfcba66de434a008f4ac8531d4bfcc3d
+spec_changes:
+  - capability: modern-java-build
+    operation: modify
+    source: specs/modern-java-build/spec.md
+    delta_source: specs/modern-java-build/delta.yaml
+    base_hash: 1669cc4cccff23336e6a8a1ce8c4f4190b5cd3beeed1a2c028f3fae6c12ed195
+workspace:
+  isolation: current
+  change_branch: comet/prepare-release-0-3-0
+  target_branch: comet/prepare-release-0-3-0
+  finish: null
+loop:
+  stage: done
+  goal_cycle: 1
+  iteration: 1
+  attempt: 1
+  retry_epoch: 0
+  failed_iteration_count: 0
+  no_progress_count: 0
+  execution_failure_count: 0
+  previous_unresolved_ids: []
+  next_action: null
+acceptance:
+  - id: A1
+    source: brief.md
+    text: "A1: The real protected-input integration check passes both before and
+      after the already approved publication. All 223 paths remain checked: 222
+      unchanged paths are fully byte-identical to the unchanged Git baseline;
+      the single expanded Spec retains the exact 10,245-byte historical prefix
+      and matches only the fixed approved 19,515-byte target/hash. No unapproved
+      document/source/archive allowance or rewritten baseline is introduced."
+    result: passed
+    reason:
+      text: Independently read the full brief, target Spec, ReferenceIntegrationTest
+        and ProtectedInputTest. Bound check complete-published-reference-java21
+        executed all three reference tests successfully; its XML reports exactly
+        223 protected paths, 222 full byte-identities and one approved expanded
+        Spec. The independently obtained tracked diff shows the baseline
+        4a267527c030a1016c113714fc334c2c4844cbdd, path selection and
+        seven-database-class/CUD exceptions unchanged. The actual integration
+        comparator is exercised by JUnit with both exact original and approved
+        archived bytes; its original-state branch retains full equality and its
+        sole differing-Spec branch requires length 19515, exact Git-original
+        prefix and fixed SHA256
+        1669cc4cccff23336e6a8a1ce8c4f4190b5cd3beeed1a2c028f3fae6c12ed195.
+        Independent Native checks confirm historical size 10245 and that
+        published, archived and current target Specs all have that approved
+        hash. Pre-publication acceptance is established by the actual
+        shared-comparator JUnit execution and unchanged integration selection,
+        without rewriting the live published Spec. No dynamic baseline, archive
+        rewrite or general append allowance.
+      truncated: false
+  - id: A2
+    source: brief.md
+    text: "A2: Small genuine JUnit regressions pass on actual Java 21 and 25 for the
+      exact initial and approved published states, and reject altered historical
+      bytes, truncated/missing content, altered accepted added content and
+      arbitrary additional content. Demonstrate a real failing regression or
+      targeted reproduction before the correction, without changing protected
+      expectations to the implementation's output."
+    result: passed
+    reason:
+      text: "Bound guards-java21 and guards-java25 both reran verificationTest
+        successfully on the Gradle-selected toolchains. VerificationRuntimeTest
+        asserts Runtime.version().feature() equals the selected property; the
+        latest XML explicitly records JVM 25.0.5+8-LTS. Inspected all six
+        ProtectedInputTest methods and their passing XML: exact
+        original/published acceptance, non-Spec full equality, historical-byte
+        alteration in both states, empty/truncated contents, altered approved
+        addition and arbitrary appendices in both states. Expected bytes come
+        from the fixed Git baseline and unchanged accepted archive, with the
+        approved content independently hash-confirmed. Inspected saved pre-fix
+        Gradle log and XML: six tests, one actual ArrayComparisonFailure in
+        exact_initial_and_approved_published_states_are_accepted, expected
+        length 10245 versus actual 19515, zero errors. The independently read
+        PR-head diff corroborates that the pre-fix helper was
+        behavior-equivalent to the original full-byte comparator; this is
+        genuine RED evidence, not a compile failure or an expectation changed to
+        candidate output."
+      truncated: false
+  - id: A3
+    source: brief.md
+    text: "A3: Java 21 `verifyReference` passes all its checks, including the
+      unchanged official API/pins and exactly characterized failing 0.2.17
+      runtime. Existing verification guards pass on actual Java 21 and 25;
+      applicable local release verification passes with honest source identity.
+      The code diff is confined to the stated verification files; product
+      implementation, fixed dependency inputs, oracles and previous archives
+      remain byte-identical to PR head
+      `a54e5a6da120750b0ed2865277d3e7e699cd0343`. Guidance and output accurately
+      distinguish the 222 unchanged paths from the approved expanded Spec."
+    result: passed
+    reason:
+      text: Reused candidate-bound complete-published-reference-java21, guards-java21,
+        guards-java25, current-release-assets-java21,
+        immutable-product-and-archives and correction-change-scope receipts.
+        Reference XML shows all three checks passed, 59 public classes/358
+        reference descriptors, and exactly eight historical runtime probes with
+        five passes/three named failures and real child exit 1. Independent
+        tracked verification diff confirms API/pin/runtime assertions unchanged;
+        immutable-input audit against a54e5a6da120750b0ed2865277d3e7e699cd0343
+        passes for product modules, build/dependency/license/CI inputs,
+        published Specs, previous archives and verification
+        implementations/reference/consumer. Status and direct inspection confine
+        implementation changes to ReferenceIntegrationTest.java, new
+        ProtectedInputTest.java and verification/README.md, apart from Native
+        administrative artifacts/configuration. Current guard XML totals 36
+        tests with no failures/errors/skips. Actual Java21
+        stageRelease/verifyRelease passed; inspected manifest honestly records
+        baseCommit a54e5a6, workingTreeModified true and signing unverified.
+        README and reference output correctly distinguish 222 unchanged inputs
+        from the approved expanded Spec. Target Spec hash is unchanged and
+        association delta has no operations.
+      truncated: false
+builder_handoff:
+  candidate_id: adc0a1c2-2932-4b5c-9433-732a8e766b32
+  identity_provider: skill-coordinated
+  builder_execution_ref: skill-coordinated:builder:38efd114-8f04-4ab9-9b51-f65c5327b4a2
+  iteration: 1
+  summary:
+    text: "Complete A1–A3 correction, confined to ReferenceIntegrationTest.java,
+      six-method ProtectedInputTest.java and verification/README.md. The initial
+      owner-approved Scope was explicitly confirmed with 'ok netx'; no scope
+      expansion. All223baseline paths remain checked:222full byte comparisons
+      unchanged; the named published Spec accepts the exact old state or only
+      length19515 plus the exact historical prefix and fixed accepted
+      SHA2561669cc4cccff23336e6a8a1ce8c4f4190b5cd3beeed1a2c028f3fae6c12ed195. No
+      dynamic baseline, archive rewrite or general append permission. Real TDD
+      used a behavior-equivalent extraction of the old byte comparator: six new
+      JUnit methods compiled and one failed for the exact published-state
+      acceptance; after the minimal correction all six plus the actual-JVM
+      assertion passed on real21/25. The real integration path then
+      passed223checks, reporting222byte-identical inputs and1exact approved
+      Spec. Development immutable-product/archive diff against PR head a54e5a6
+      passed. Full guard/reference/staging plans are submitted for Runtime
+      rather than run redundantly beforehand. Current public PR3 CI failures
+      remain recorded; no later commit/push/merge/publication occurred. Existing
+      accepted full target Spec and empty delta remain unchanged, so this
+      verification-only change publishes no new product requirements."
+    truncated: false
+  addressed_acceptance_ids:
+    - A1
+    - A2
+    - A3
+  acceptance_review:
+    - id: A1
+      status: implemented-with-evidence
+      evidence:
+        - verification/src/test/java/com/arboratum/beangen/verification/ReferenceIntegrationTest.java
+        - build/verification/post-archive-protection/post-archive-protected-integration-green21.log
+        - build/test-results/verifyReference/TEST-com.arboratum.beangen.verification.ReferenceIntegrationTest.xml
+        - docs/comet/archive/2026-11-18-prepare-release-0-3-0/specs/modern-java-build/spec.md
+      note: No path was removed or added to baseline exceptions. The helper keeps full
+        equality for every other protected path and the initial Spec; only the
+        named differing Spec must have exact19515bytes, exact Git-baseline
+        prefix and the already confirmed target hash. Actual focused integration
+        passed223paths:222full byte-equalities+1approved published Spec. The
+        accepted target archive equals the current published Spec and was not
+        edited.
+    - id: A2
+      status: implemented-with-evidence
+      evidence:
+        - verification/src/test/java/com/arboratum/beangen/verification/ProtectedInputTest.java
+        - build/verification/post-archive-protection/post-archive-protection-red21.log
+        - build/verification/post-archive-protection/post-archive-protection-red21.xml
+        - build/verification/post-archive-protection/post-archive-protection-green21.log
+        - build/verification/post-archive-protection/post-archive-protection-green25.log
+      note: Six methods cover exact original/published acceptance, full equality for a
+        different protected path, changed historical bytes in both states,
+        empty/truncated original/truncated published states, changed approved
+        addition and appended foreign content after either state. Fixed
+        references are the unchanged Git baseline and immutable accepted
+        archive, never candidate-derived expected content. Actual RED compiled
+        and failed only the published-state acceptance
+        (6tests/1failure/0errors); actual GREEN on21/25 passed6tests plus
+        VerificationRuntimeTest to assert the selected JVM.
+    - id: A3
+      status: implemented-with-evidence
+      evidence:
+        - verification/src/test/java/com/arboratum/beangen/verification/ReferenceIntegrationTest.java
+        - verification/README.md
+        - build/verification/post-archive-protection/
+        - build.gradle
+      note: Original official pin/API and eight-probe/five-pass/three-exact-failure
+        characterization code is unchanged. Current source audit against a54e5a6
+        passes for all application modules,
+        dependencies/build/CI/license/wrappers, publication/reference builds,
+        published Spec and earlier archives; only the two tracked verification
+        files plus the new test are implementation changes. Output and guide
+        distinguish222unchanged inputs from1approved Spec. Focused checks
+        actually passed; remaining full36guard tests on21/25, full
+        verifyReference21 and actual release staging/verification are registered
+        below for Runtime. No premature remote-success claim.
+  checks:
+    - name:
+        text: Real pre-fix Java21 JUnit regression
+        truncated: false
+      result: failed
+      note:
+        text: Intended RED:6tests/1expected assertion failure/0errors, legacy comparator
+          rejects accepted19515byte published Spec versus10245byte original.
+          XML/log preserved in build/verification/post-archive-protection.
+        truncated: false
+    - name:
+        text: Focused actual Java21 and25 regressions
+        truncated: false
+      result: passed
+      note:
+        text: Both wrapper runs exit0:ProtectedInputTest6tests plus
+          VerificationRuntimeTest1test,0failure/error/skip on each selected real
+          JVM.
+        truncated: false
+    - name:
+        text: Actual protected-input integration Java21
+        truncated: false
+      result: passed
+      note:
+        text: Wrapper verifyReference filtered to
+          protected_baseline_inputs_are_byte_identical exit0:223checked,222fully
+          byte-identical and1exact approved published Spec.
+        truncated: false
+    - name:
+        text: Immutable product/archive scope audit
+        truncated: false
+      result: passed
+      note:
+        text: git diff --exit-code --no-ext-diff against a54e5a6 for application
+          modules,build/CI/dependency/license/wrappers,earlier
+          archives,published Spec,verification
+          implementations/consumer/reference all exit0.
+        truncated: false
+    - name:
+        text: Current correction whitespace
+        truncated: false
+      result: failed
+      note:
+        text: Tracked git diff --check exit2 and new-test --no-index check
+          exit3:35indent-with-spaces diagnostics total,0other diagnostics.
+          Existing original product1076diagnostics remain historical; no rule
+          relaxed.
+        truncated: false
+    - name:
+        text: Complete Runtime final plan
+        truncated: false
+      result: not-run
+      note:
+        text: Builder deliberately ran focused checks only. Runtime must execute the
+          complete plans below; development logs are not receipts.
+        truncated: false
+  checks_truncated: false
+  known_limits:
+    - text: Current correction whitespace checks still FAIL with35indentation
+        diagnostics (tracked exit2/new-file exit3),0other diagnostics. Original
+        product full staged check failed1076indentations. No whitespace
+        configuration or assertion was relaxed.
+      truncated: false
+    - text: PR3 remote CI at head a54e5a6 remains failed in both old push/PR runs
+        because of the now-corrected uncommitted protection test; no new remote
+        CI has run and no new commit/push/merge/tag/release/upload/cleanup
+        occurred.
+      truncated: false
+    - text: Current local staged identity must reflect this verification-only dirty
+        candidate, not an authorized final merge/release identity.
+        Rebuild/restage after future final delivery; never publish the prior
+        precommit manifest as final.
+      truncated: false
+    - text: All earlier archives and current product implementations are immutable for
+        this task. Complete target Spec/empty delta are unchanged; no new
+        requirement appendix is intended.
+      truncated: false
+    - text: Original published0.2.17 runtime remains5pass/3characterized failures and
+        actual child exit1. Finite API/protected-input probes are not exhaustive
+        linkage/all-seed/legal/security/benchmark certification.
+      truncated: false
+    - text: Real signing/crypto/public-key availability/namespace rights/Portal
+        validation and acceptance remain unqualified. Structural fixtures and
+        successful unsigned staging are not publication.
+      truncated: false
+    - text: CodeGraph was previously unavailable in this worktree; no index
+        repair/borrowing or exclusion change was attempted for this correction.
+        The only approved .gitignore change was separately committed224e0e4
+        before this task.
+      truncated: false
+  known_limits_truncated: false
+  review: null
+  submitted_at: 2026-11-19T13:47:26.970Z
+blockers: []
+verification:
+  candidate_id: adc0a1c2-2932-4b5c-9433-732a8e766b32
+  identity_provider: skill-coordinated
+  verifier_execution_ref: skill-coordinated:verifier:fa2b39d1-3e00-49f4-a09a-d9cab1252e5d
+  iteration: 1
+  attempt: 1
+  assurance: skill-coordinated
+  verdict: pass
+  checks:
+    - id: guards-java21
+      name:
+        text: Complete Java21 verification guards including six protected-input
+          regressions
+        truncated: false
+      argv_display:
+        - text: -u
+          truncated: false
+        - text: "[REDACTED]"
+          truncated: false
+        - text: -u
+          truncated: false
+        - text: "[REDACTED]"
+          truncated: false
+        - text: JAVA_HOME=/Library/Java/JavaVirtualMachines/temurin-21.jdk/Contents/Home
+          truncated: false
+        - text: ./gradlew
+          truncated: false
+        - text: --no-daemon
+          truncated: false
+        - text: --console=plain
+          truncated: false
+        - text: --max-workers=1
+          truncated: false
+        - text: -PjavaVersion=21
+          truncated: false
+        - text: --rerun-tasks
+          truncated: false
+        - text: verificationTest
+          truncated: false
+      argv_truncated: false
+      cwd_ref: .
+      status: passed
+      exit_code: 0
+      duration_ms: 5790
+    - id: guards-java25
+      name:
+        text: Complete Java25 verification guards including six protected-input
+          regressions
+        truncated: false
+      argv_display:
+        - text: -u
+          truncated: false
+        - text: "[REDACTED]"
+          truncated: false
+        - text: -u
+          truncated: false
+        - text: "[REDACTED]"
+          truncated: false
+        - text: JAVA_HOME=/Library/Java/JavaVirtualMachines/temurin-21.jdk/Contents/Home
+          truncated: false
+        - text: ./gradlew
+          truncated: false
+        - text: --no-daemon
+          truncated: false
+        - text: --console=plain
+          truncated: false
+        - text: --max-workers=1
+          truncated: false
+        - text: -PjavaVersion=25
+          truncated: false
+        - text: --rerun-tasks
+          truncated: false
+        - text: verificationTest
+          truncated: false
+      argv_truncated: false
+      cwd_ref: .
+      status: passed
+      exit_code: 0
+      duration_ms: 5899
+    - id: complete-published-reference-java21
+      name:
+        text: All official pins API protected-input and exact historical runtime checks
+        truncated: false
+      argv_display:
+        - text: -u
+          truncated: false
+        - text: "[REDACTED]"
+          truncated: false
+        - text: -u
+          truncated: false
+        - text: "[REDACTED]"
+          truncated: false
+        - text: JAVA_HOME=/Library/Java/JavaVirtualMachines/temurin-21.jdk/Contents/Home
+          truncated: false
+        - text: ./gradlew
+          truncated: false
+        - text: --no-daemon
+          truncated: false
+        - text: --console=plain
+          truncated: false
+        - text: --max-workers=1
+          truncated: false
+        - text: -PjavaVersion=21
+          truncated: false
+        - text: verifyReference
+          truncated: false
+      argv_truncated: false
+      cwd_ref: .
+      status: passed
+      exit_code: 0
+      duration_ms: 8988
+    - id: current-release-assets-java21
+      name:
+        text: Actual current-source release staging and verification on Java21
+        truncated: false
+      argv_display:
+        - text: -u
+          truncated: false
+        - text: "[REDACTED]"
+          truncated: false
+        - text: -u
+          truncated: false
+        - text: "[REDACTED]"
+          truncated: false
+        - text: JAVA_HOME=/Library/Java/JavaVirtualMachines/temurin-21.jdk/Contents/Home
+          truncated: false
+        - text: ./gradlew
+          truncated: false
+        - text: --no-daemon
+          truncated: false
+        - text: --console=plain
+          truncated: false
+        - text: --max-workers=1
+          truncated: false
+        - text: -PjavaVersion=21
+          truncated: false
+        - text: stageRelease
+          truncated: false
+        - text: verifyRelease
+          truncated: false
+      argv_truncated: false
+      cwd_ref: .
+      status: passed
+      exit_code: 0
+      duration_ms: 4330
+    - id: immutable-product-and-archives
+      name:
+        text: Unchanged application dependency build license published Spec and prior
+          archives
+        truncated: false
+      argv_display:
+        - text: diff
+          truncated: false
+        - text: --exit-code
+          truncated: false
+        - text: --no-ext-diff
+          truncated: false
+        - text: a54e5a6da120750b0ed2865277d3e7e699cd0343
+          truncated: false
+        - text: fastbeangen
+          truncated: false
+        - text: fastbeangen-doc
+          truncated: false
+        - text: fastbeangen-example
+          truncated: false
+        - text: docs/comet/archive
+          truncated: false
+        - text: docs/comet/specs
+          truncated: false
+        - text: gradle
+          truncated: false
+        - text: settings.gradle
+          truncated: false
+        - text: build.gradle
+          truncated: false
+        - text: LICENSE
+          truncated: false
+        - text: COPYING
+          truncated: false
+        - text: .github/workflows/ci.yml
+          truncated: false
+        - text: .gitignore
+          truncated: false
+        - text: verification/src/main
+          truncated: false
+        - text: verification/consumer
+          truncated: false
+        - text: verification/published-compatibility
+          truncated: false
+      argv_truncated: false
+      cwd_ref: .
+      status: passed
+      exit_code: 0
+      duration_ms: 15
+    - id: correction-change-scope
+      name:
+        text: Tracked and untracked scope of the complete correction candidate
+        truncated: false
+      argv_display:
+        - text: status
+          truncated: false
+        - text: --short
+          truncated: false
+        - text: --untracked-files=all
+          truncated: false
+      argv_truncated: false
+      cwd_ref: .
+      status: passed
+      exit_code: 0
+      duration_ms: 18
+    - id: independent-verification-code-diff
+      name:
+        text: Independent exact tracked correction diff against PR head
+        truncated: false
+      argv_display:
+        - text: diff
+          truncated: false
+        - text: --no-ext-diff
+          truncated: false
+        - text: a54e5a6da120750b0ed2865277d3e7e699cd0343
+          truncated: false
+        - text: --
+          truncated: false
+        - text: verification
+          truncated: false
+      argv_truncated: false
+      cwd_ref: .
+      status: passed
+      exit_code: 0
+      duration_ms: 15
+    - id: independent-approved-spec-hashes
+      name:
+        text: Published archived and unchanged target Spec approved SHA256 identities
+        truncated: false
+      argv_display:
+        - text: -a
+          truncated: false
+        - text: "256"
+          truncated: false
+        - text: docs/comet/specs/modern-java-build/spec.md
+          truncated: false
+        - text: docs/comet/archive/2026-11-18-prepare-release-0-3-0/specs/modern-java-build/spec.md
+          truncated: false
+        - text: docs/comet/changes/fix-post-archive-reference-check/specs/modern-java-build/spec.md
+          truncated: false
+      argv_truncated: false
+      cwd_ref: .
+      status: passed
+      exit_code: 0
+      duration_ms: 46
+    - id: independent-historical-spec-size
+      name:
+        text: Historical protected Spec size from fixed Git baseline
+        truncated: false
+      argv_display:
+        - text: cat-file
+          truncated: false
+        - text: -s
+          truncated: false
+        - text: 4a267527c030a1016c113714fc334c2c4844cbdd:docs/comet/specs/modern-java-build/spec.md
+          truncated: false
+      argv_truncated: false
+      cwd_ref: .
+      status: passed
+      exit_code: 0
+      duration_ms: 12
+  summary:
+    text: Independent read-only assessment passes A1-A3 for unchanged candidate
+      adc0a1c2-2932-4b5c-9433-732a8e766b32. Read every scoped acceptance item,
+      complete brief/target Spec and candidate before consulting Builder claims;
+      inspected Runtime logs, JUnit XML, pre-fix RED evidence and staged
+      identity. Reused six applicable Runtime checks and requested only three
+      missing read-only audits (exact verification diff, approved Spec hashes,
+      historical size), all completed successfully. No candidate/formal/source
+      edits or direct test execution; final result personally submitted through
+      Native, with whitespace, historical runtime, remote CI and publication
+      limitations retained.
+    truncated: false
+  risks:
+    - text: Verification is skill-coordinated independent semantic assessment, not
+        host-attested independence; owner acceptance remains a separate Native
+        gate.
+      truncated: false
+    - text: Builder reports current correction whitespace checks still fail with 35
+        indentation diagnostics (tracked exit 2/new-file exit 3), with no other
+        diagnostic types; historical product indentation diagnostics remain.
+        These were not relabeled as passing or relaxed, and are explicitly
+        outside this correction's functional acceptance gates.
+      truncated: false
+    - text: Historical PR3 push/PR CI failures at a54e5a6 remain failures. No fresh
+        remote CI, commit, push, merge, tag, upload, publication or cleanup was
+        performed by this Verifier. Delivery requires subsequent green Java21/25
+        CI on the actual delivered head and merge commit.
+      truncated: false
+    - text: Local assets describe a modified working tree, not an authorized final
+        release identity; rebuild/restage and reverify after final delivery.
+        Unsigned local staging does not prove cryptographic signing, public-key
+        availability, namespace rights or Portal validation/acceptance.
+      truncated: false
+    - text: The unmodified published 0.2.17 runtime still has exactly three
+        characterized failures; successful characterization is not a passing
+        historical build. Finite API/protected-input/regression probes do not
+        establish exhaustive linkage, all-seed, legal, security or benchmark
+        certification.
+      truncated: false
+    - text: No redundant full module/example/signing suites were requested for this
+        verification-only change; matching Runtime receipts were reused. The
+        before-publication state was exercised through the real integration
+        comparator in JUnit, not by rolling back the live published document.
+      truncated: false
+    - text: CodeGraph was reported unavailable; no index repair, borrowed index or
+        exclusion change was attempted.
+      truncated: false
+  risks_truncated: false
+  completed_at: 2026-11-19T13:49:19.658Z
+history:
+  - goal_cycle: 1
+    iteration: 1
+    attempt: 1
+    outcome: pass
+    unresolved_ids: []
+    summary:
+      text: Independent read-only assessment passes A1-A3 for unchanged candidate
+        adc0a1c2-2932-4b5c-9433-732a8e766b32. Read every scoped acceptance item,
+        complete brief/target Spec and candidate before consulting Builder
+        claims; inspected Runtime logs, JUnit XML, pre-fix RED evidence and
+        staged identity. Reused six applicable Runtime checks and requested only
+        three missing read-only audits (exact verification diff, approved Spec
+        hashes, historical size), all completed successfully. No
+        candidate/formal/source edits or direct test execution; final result
+        personally submitted through Native, with whitespace, historical
+        runtime, remote CI and publication limitations retained.
+      truncated: false
+    completed_at: 2026-11-19T13:49:19.658Z
+history_overflow:
+  dropped_entries: 0
+  first_dropped_at: null
+  last_dropped_at: null
+  outcome_counts:
+    pass: 0
+    fail: 0
+    blocked: 0
+    execution-error: 0
+    recovery: 0
+verification_result: pass
+verification_report: verification.md
+archived: true
+created_at: 2026-11-19T12:48:03.350Z
